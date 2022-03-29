@@ -47,9 +47,9 @@ cw =1
 
 """ Joystick Init """
 
-pygame.joystick.init()
-joystick = pygame.joystick.Joystick(0)
-joystick.init()
+#pygame.joystick.init()
+#joystick = pygame.joystick.Joystick(0)
+#joystick.init()
 
 """ XBOX One controller settings """
 """ use Essai_Joystick_01.py utility to find out the right parameters """
@@ -157,12 +157,55 @@ while (continuer):
             else:
                 mouseclick = False
                 
-        for i in range (0,nj): #read analog joystick position
-            joypos[i] = joystick.get_axis(i)                        
-        for i in range (0,nb):  #read buttons
-            joybut[i] = joystick.get_button(i)
-        joyhat = joystick.get_hat(0)  #read hat  
+        #for i in range (0,nj): #read analog joystick position
+        #    joypos[i] = joystick.get_axis(i)                        
+        #for i in range (0,nb):  #read buttons
+        #    joybut[i] = joystick.get_button(i)
+        #joyhat = joystick.get_hat(0)  #read hat  
         
+        #for i in range (0,nj):  #read buttons
+        #    joypos[i]    = 0
+        #for i in range (0,nb):  #read buttons
+        #    joybut[i]    = 0
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                joypos[pos_leftright] = -1
+            elif event.key == pygame.K_RIGHT:
+                joypos[pos_leftright] = 1
+            elif event.key == pygame.K_UP:
+                joypos[pos_frontrear] = -1
+            elif event.key == pygame.K_DOWN:
+                joypos[pos_frontrear] = 1
+
+            #joybut[but_walk]       = 1
+            #joybut[but_sit]        = 1
+            #joybut[but_pee]        = 1
+            #joybut[but_twist]      = 1
+            ##joybut[but_anim]       = 1
+
+            joybut[but_walk]        = 1
+            joypos[pos_turn]        = 1
+        elif event.type == pygame.KEYUP:
+           for i in range (0,nj):  #read buttons
+               joypos[i]    = 0
+           for i in range (0,nb):  #read buttons
+               joybut[i]    = 0
+
+        # but_walk = 7
+        # but_sit = 2
+        # but_lie = 3
+        # but_twist = 1
+        # but_pee = 0
+        # but_move = 4
+        # but_anim = 5
+
+        # pos_frontrear = 4
+        # pos_leftright = 3
+        # pos_turn = 0
+        # pos_rightpaw = 5
+        # pos_leftpaw = 2
+
         """Animation"""
         
         if (joybut[but_walk] == 0)&(joybut[but_pee] == 0)&(joybut[but_twist] == 0)&(joybut[but_sit] == 0)&(joybut[but_lie] == 0)&(joybut[but_anim] == 0)&(joybut[but_move] == 0)&(lock == True):
