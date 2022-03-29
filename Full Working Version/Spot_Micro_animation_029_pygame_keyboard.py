@@ -308,18 +308,19 @@ def moving (pos,move):
             except ValueError:
                 print ('Angle out of Range')
 
+
 """ i2C Initialization"""
-i2c= busio.I2C(board.SCL, board.SDA)
-pca = adafruit_pca9685.PCA9685(i2c)
-mpu = adafruit_mpu6050.MPU6050(i2c)
-pca.frequency = 50
-kit = ServoKit(channels=16)
+#i2c= busio.I2C(board.SCL, board.SDA)
+#pca = adafruit_pca9685.PCA9685(i2c)
+#mpu = adafruit_mpu6050.MPU6050(i2c)
+#pca.frequency = 50
+#kit = ServoKit(channels=16)
 #ads = ADS.ADS1015(i2c)
 #ads.gain = 2/3
 
 """PWM range setting """
-for i in range(0,12):
-    kit.servo[Spot.servo_table[i]].set_pulse_width_range(500, 2500)
+#for i in range(0,12):
+    #kit.servo[Spot.servo_table[i]].set_pulse_width_range(500, 2500)
 
 
 """ """
