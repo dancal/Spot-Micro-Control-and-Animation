@@ -16,7 +16,8 @@ Spot = Spotmicro_Inverse_Kinematics_and_Position_Library_v01.Spot()
 import Spotmicro_Gravity_Center_Library_v01
 SpotCG = Spotmicro_Gravity_Center_Library_v01.SpotCG()
 pygame.init()
-screen = pygame.display.set_mode((600, 600)) 
+#screen = pygame.display.set_mode((600, 600)) 
+screen = pygame.display.set_mode((1024, 768), pygame.DOUBLEBUF, vsync=1)
 
 class SpotAnim:
     

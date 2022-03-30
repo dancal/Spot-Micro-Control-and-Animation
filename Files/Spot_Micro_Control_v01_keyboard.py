@@ -15,7 +15,8 @@ import numpy as np
 import pygame
 
 pygame.init()
-screen = pygame.display.set_mode((600, 600))
+#screen = pygame.display.set_mode([600, 600])
+screen = pygame.display.set_mode((1024, 768), pygame.DOUBLEBUF, vsync=1)
 pygame.display.set_caption("SPOTMICRO")
 
 import Spotmicro_Inverse_Kinematics_and_Position_Library_v01
