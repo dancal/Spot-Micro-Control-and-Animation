@@ -156,15 +156,27 @@ while continuer:
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                joypos[pos_leftright] = -1
+                joybut[but_walk]        = 1
+                joypos[pos_leftright]   = -1
             if event.key == pygame.K_RIGHT:
-                joypos[pos_leftright] = 1
+                joybut[but_walk]        = 1
+                joypos[pos_leftright]   = 1
             if event.key == pygame.K_UP:
-                joypos[pos_frontrear] = -1
+                joybut[but_walk]        = 1
+                joypos[pos_frontrear]   = -1
             if event.key == pygame.K_DOWN:
-                joypos[pos_frontrear] = 1
-
-            joybut[but_walk]    = 1
+                joybut[but_walk]        = 1
+                joypos[pos_frontrear]   = 1
+            if event.key == pygame.K_a:
+                joybut[but_move]        = 1
+                joybut[but_walk]        = 1
+                joypos[pos_turn]        = -1
+                joypos[pos_leftright]   = -1
+            if event.key == pygame.K_d:
+                joybut[but_move]        = 1
+                joybut[but_walk]        = 1
+                joypos[pos_turn]        = 1
+                joypos[pos_leftright]   = 1
 
         elif event.type == pygame.KEYUP:
             for i in range(0, nj):
