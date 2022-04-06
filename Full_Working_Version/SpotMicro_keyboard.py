@@ -275,14 +275,10 @@ def comp_filter(angle, t, T):
 
 def servo_moving(pos, move):
 
-    thetalf_reply = Spot.IK(Spot.L0, Spot.L1, Spot.L2,
-                            Spot.d, pos[0]+xtlf, pos[1]+ytlf, pos[2]+ztlf, 1)
-    thetarf_reply = Spot.IK(Spot.L0, Spot.L1, Spot.L2,
-                            Spot.d, pos[3]+xtrf, pos[4]+ytrf, pos[5]+ztrf, -1)
-    thetarr_reply = Spot.IK(Spot.L0, Spot.L1, Spot.L2,
-                            Spot.d, pos[6]+xtrr, pos[7]+ytrr, pos[8]+ztrr, -1)
-    thetalr_reply = Spot.IK(Spot.L0, Spot.L1, Spot.L2,
-                            Spot.d, pos[9]+xtlr, pos[10]+ytlr, pos[11]+ztlr, 1)
+    thetalf_reply = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[0]+xtlf, pos[1]+ytlf, pos[2]+ztlf, 1)
+    thetarf_reply = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[3]+xtrf, pos[4]+ytrf, pos[5]+ztrf, -1)
+    thetarr_reply = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[6]+xtrr, pos[7]+ytrr, pos[8]+ztrr, -1)
+    thetalr_reply = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[9]+xtlr, pos[10]+ytlr, pos[11]+ztlr, 1)
 
     thetalf = thetalf_reply[0]
     thetarf = thetarf_reply[0]
@@ -292,53 +288,37 @@ def servo_moving(pos, move):
     if move == True:
         if (thetalf_reply[1] == False):
             try:
-                ShoulderAngle = thetalf[0]/pi*180 * \
-                    Spot.angle_scale_factor_lf1*Spot.dir01+Spot.zero01
-                LegAngle = thetalf[1]/pi*180 * \
-                    Spot.angle_scale_factor_lf2*Spot.dir02+Spot.zero02
-                FeetAngle = thetalf[2]/pi*180 * \
-                    Spot.angle_scale_factor_lf3*Spot.dir03+Spot.zero03
-                print('Front_LEFT : ', ShoulderAngle,
-                      ', ', LegAngle, ', ', FeetAngle)
+                ShoulderAngle = thetalf[0]/pi*180 * Spot.angle_scale_factor_lf1*Spot.dir01+Spot.zero01
+                LegAngle = thetalf[1]/pi*180 * Spot.angle_scale_factor_lf2*Spot.dir02+Spot.zero02
+                FeetAngle = thetalf[2]/pi*180 * Spot.angle_scale_factor_lf3*Spot.dir03+Spot.zero03
+                print('Front_LEFT : ', ShoulderAngle, ', ', LegAngle, ', ', FeetAngle)
             except ValueError:
                 print('Angle out of Range')
 
         if (thetarf_reply[1] == False):
             try:
-                ShoulderAngle = thetarf[0]/pi*180 * \
-                    Spot.angle_scale_factor_rf1*Spot.dir04+Spot.zero04
-                LegAngle = thetarf[1]/pi*180 * \
-                    Spot.angle_scale_factor_rf2*Spot.dir05+Spot.zero05
-                FeetAngle = thetarf[2]/pi*180 * \
-                    Spot.angle_scale_factor_rf3*Spot.dir06+Spot.zero06
-                print('Front_RIGHT : ', ShoulderAngle,
-                      ', ', LegAngle, ', ', FeetAngle)
+                ShoulderAngle = thetarf[0]/pi*180 * Spot.angle_scale_factor_rf1*Spot.dir04+Spot.zero04
+                LegAngle = thetarf[1]/pi*180 * Spot.angle_scale_factor_rf2*Spot.dir05+Spot.zero05
+                FeetAngle = thetarf[2]/pi*180 * Spot.angle_scale_factor_rf3*Spot.dir06+Spot.zero06
+                print('Front_RIGHT : ', ShoulderAngle, ', ', LegAngle, ', ', FeetAngle)
             except ValueError:
                 print('Angle out of Range')
 
         if (thetarr_reply[1] == False):
             try:
-                ShoulderAngle = thetarr[0]/pi*180 * \
-                    Spot.angle_scale_factor_rr1*Spot.dir07+Spot.zero07
-                LegAngle = thetarr[1]/pi*180 * \
-                    Spot.angle_scale_factor_rr2*Spot.dir07+Spot.zero08
-                FeetAngle = thetarr[2]/pi*180 * \
-                    Spot.angle_scale_factor_rr3*Spot.dir09+Spot.zero09
-                print('REAR_RIGHT : ', ShoulderAngle,
-                      ', ', LegAngle, ', ', FeetAngle)
+                ShoulderAngle = thetarr[0]/pi*180 * Spot.angle_scale_factor_rr1*Spot.dir07+Spot.zero07
+                LegAngle = thetarr[1]/pi*180 * Spot.angle_scale_factor_rr2*Spot.dir07+Spot.zero08
+                FeetAngle = thetarr[2]/pi*180 * Spot.angle_scale_factor_rr3*Spot.dir09+Spot.zero09
+                print('REAR_RIGHT : ', ShoulderAngle, ', ', LegAngle, ', ', FeetAngle)
             except ValueError:
                 print('Angle out of Range')
 
         if (thetalr_reply[1] == False):
             try:
-                ShoulderAngle = thetalr[0]/pi*180 * \
-                    Spot.angle_scale_factor_lr1*Spot.dir10+Spot.zero10
-                LegAngle = thetalr[1]/pi*180 * \
-                    Spot.angle_scale_factor_lr2*Spot.dir11+Spot.zero11
-                FeetAngle = thetalr[2]/pi*180 * \
-                    Spot.angle_scale_factor_lr3*Spot.dir12+Spot.zero12
-                print('REAR_LEFT : ', ShoulderAngle,
-                      ', ', LegAngle, ', ', FeetAngle)
+                ShoulderAngle = thetalr[0]/pi*180 * Spot.angle_scale_factor_lr1*Spot.dir10+Spot.zero10
+                LegAngle = thetalr[1]/pi*180 * Spot.angle_scale_factor_lr2*Spot.dir11+Spot.zero11
+                FeetAngle = thetalr[2]/pi*180 * Spot.angle_scale_factor_lr3*Spot.dir12+Spot.zero12
+                print('REAR_LEFT : ', ShoulderAngle, ', ', LegAngle, ', ', FeetAngle)
             except ValueError:
                 print('Angle out of Range')
 
@@ -348,14 +328,17 @@ def servo_moving(pos, move):
 ##pca = adafruit_pca9685.PCA9685(i2c)
 ##mpu = adafruit_mpu6050.MPU6050(i2c)
 ##pca.frequency = 50
-##kit = ServoKit(channels=16)
+#kitF = ServoKit(channels=16, address=0x40)
+#kitB = ServoKit(channels=16, address=0x41)
+
 ##ads = ADS.ADS1015(i2c)
 ##ads.gain = 2/3
 
 """PWM range setting """
-# for i in range(0,12):
-##    kit.servo[Spot.servo_table[i]].set_pulse_width_range(500, 2500)
-
+# for i in range(0,6):
+##    kitF.servo[Spot.servo_table[i]].set_pulse_width_range(500, 2500)
+# for i in range(0,6):
+##    kitB.servo[Spot.servo_table[i]].set_pulse_width_range(500, 2500)
 
 """ """
 
@@ -377,44 +360,32 @@ setRGB(127, 127, 255)
 
 """ Initialize legs and body positions """
 x_spot = [0, x_offset, Spot.xlf, Spot.xrf, Spot.xrr, Spot.xlr, 0, 0, 0, 0]
-y_spot = [0, 0, Spot.ylf+track, Spot.yrf-track,
-          Spot.yrr-track, Spot.ylr+track, 0, 0, 0, 0]
+y_spot = [0, 0, Spot.ylf+track, Spot.yrf-track, Spot.yrr-track, Spot.ylr+track, 0, 0, 0, 0]
 z_spot = [0, b_height, 0, 0, 0, 0, 0, 0, 0, 0]
 theta_spot = [0, 0, 0, 0, 0, 0]
 
 
 """theta_spot = [x angle ground, y angle ground, z angle body in space, x angle body, y angle body, z angle body] """
 # theta xyz of ground then theta xyz of frame/body
-pos_init = [-x_offset, track, -b_height, -x_offset, -track, -
-            b_height, -x_offset, -track, -b_height, -x_offset, track, -b_height]
+pos_init = [-x_offset, track, -b_height, -x_offset, -track, -b_height, -x_offset, -track, -b_height, -x_offset, track, -b_height]
 
-thetalf = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d,
-                  pos_init[0], pos_init[1], pos_init[2], 1)[0]
-thetarf = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d,
-                  pos_init[3], pos_init[4], pos_init[5], -1)[0]
-thetarr = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d,
-                  pos_init[6], pos_init[7], pos_init[8], -1)[0]
-thetalr = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d,
-                  pos_init[9], pos_init[10], pos_init[11], 1)[0]
+thetalf = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos_init[0], pos_init[1], pos_init[2], 1)[0]
+thetarf = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos_init[3], pos_init[4], pos_init[5], -1)[0]
+thetarr = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos_init[6], pos_init[7], pos_init[8], -1)[0]
+thetalr = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos_init[9], pos_init[10], pos_init[11], 1)[0]
 
 CG = SpotCG.CG_calculation(thetalf, thetarf, thetarr, thetalr)
 ZMP = [CG[0], CG[1]]  # ZMP is initialized to CG position
 # Calculation of CG absolute position
-M = Spot.xyz_rotation_matrix(
-    theta_spot[0], theta_spot[1], theta_spot[2], False)
-CGabs = Spot.new_coordinates(
-    M, CG[0], CG[1], CG[2], x_spot[1], y_spot[1], z_spot[1])
-dCG = SpotCG.CG_distance(
-    x_spot[2:6], y_spot[2:6], z_spot[2:6], CGabs[0], CGabs[1], stance)
+M = Spot.xyz_rotation_matrix( theta_spot[0], theta_spot[1], theta_spot[2], False)
+CGabs = Spot.new_coordinates( M, CG[0], CG[1], CG[2], x_spot[1], y_spot[1], z_spot[1])
+dCG = SpotCG.CG_distance( x_spot[2:6], y_spot[2:6], z_spot[2:6], CGabs[0], CGabs[1], stance)
 
-x_spot = [0, x_offset, Spot.xlf, Spot.xrf, Spot.xrr,
-          Spot.xlr, CG[0], CGabs[0], dCG[1], ZMP[0]]
-y_spot = [0, 0, Spot.ylf+track, Spot.yrf-track, Spot.yrr -
-          track, Spot.ylr+track, CG[1], CGabs[1], dCG[2], ZMP[1]]
+x_spot = [0, x_offset, Spot.xlf, Spot.xrf, Spot.xrr, Spot.xlr, CG[0], CGabs[0], dCG[1], ZMP[0]]
+y_spot = [0, 0, Spot.ylf+track, Spot.yrf-track, Spot.yrr - track, Spot.ylr+track, CG[1], CGabs[1], dCG[2], ZMP[1]]
 z_spot = [0, b_height, 0, 0, 0, 0, CG[2], CGabs[2], dCG[3], CGabs[2]]
 
-pos = [-x_offset, track, -b_height, -x_offset, -track, -b_height, -x_offset, -
-       track, -b_height, -x_offset, track, -b_height, theta_spot, x_spot, y_spot, z_spot]
+pos = [-x_offset, track, -b_height, -x_offset, -track, -b_height, -x_offset, -track, -b_height, -x_offset, track, -b_height, theta_spot, x_spot, y_spot, z_spot]
 
 # Read Battery Voltage
 
@@ -602,8 +573,7 @@ while (continuer):
 
             # update request
             module = sqrt(joypos[pos_leftright]**2 + joypos[pos_frontrear]**2)
-            walking_direction = (
-                atan2(-joypos[pos_leftright], -joypos[pos_frontrear]) % (2*pi)+pi/2) % (2*pi)
+            walking_direction = (atan2(-joypos[pos_leftright], -joypos[pos_frontrear]) % (2*pi)+pi/2) % (2*pi)
 
             x_new = module*cos(walking_direction)
             y_new = module*sin(walking_direction)
@@ -636,14 +606,12 @@ while (continuer):
             # reduces speed sideways and backwards
             min_h_amp = h_amp*(1/2e6*steering+1/2)
             xa = 1+cos(walking_direction-pi/2)
-            walking_speed = min(1, module) * min(h_amp,
-                                                 min_h_amp) * (1/8*xa**2+1/8*xa+1/4)
+            walking_speed = min(1, module) * min(h_amp, min_h_amp) * (1/8*xa**2+1/8*xa+1/4)
 
         if ((abs(joypos[pos_leftright]) < 0.2) & (abs(joypos[pos_frontrear]) < 0.2)) & (stop == False):
             t = t+tstep
             module = max(0, module-0.01)
-            walking_speed = module * h_amp * \
-                ((1+cos(walking_direction-pi/2))/2*0.75+0.25)
+            walking_speed = module * h_amp * ((1+cos(walking_direction-pi/2))/2*0.75+0.25)
             if (steering < 2000):
                 steering = min(1e6, steering*coef)
             else:
@@ -712,8 +680,7 @@ while (continuer):
                              Kd*Derivative_AngleY) + bend_angle
             theta_spot[0] = Angle[0]
             theta_spot[1] = -Angle[1]
-            x_offset = (height+CG[2])*sin(Kp*Angle[1] +
-                                          Ki*Integral_Angle[1]+Kd*Derivative_AngleY)
+            x_offset = (height+CG[2])*sin(Kp*Angle[1] + Ki*Integral_Angle[1]+Kd*Derivative_AngleY)
         else:
             theta_spot[3] = 0
             theta_spot[4] = bend_angle
@@ -731,8 +698,7 @@ while (continuer):
             else:
                 """ stop """
                 phase = 5+trans
-        pos = Spot.start_walk_stop(track, x_offset, steering, walking_direction, cw, walking_speed,
-                                   v_amp, height, stepl, t, tstep, theta_spot, x_spot, y_spot, z_spot, phase)
+        pos = Spot.start_walk_stop(track, x_offset, steering, walking_direction, cw, walking_speed, v_amp, height, stepl, t, tstep, theta_spot, x_spot, y_spot, z_spot, phase)
         theta_spot = pos[12]
         x_spot = pos[13]
         y_spot = pos[14]
@@ -769,8 +735,7 @@ while (continuer):
         start_frame_pos = [0, 0, 0, x_offset, 0, b_height]
 
         # end_frame_pos = [0,0,0,x_offset,0,b_height-20] # x,y,z rotations then translations
-        end_frame_pos = [0, alpha_sitting, 0, x_end_sitting, 0,
-                         z_end_sitting]  # x,y,z rotations then translations
+        end_frame_pos = [0, alpha_sitting, 0, x_end_sitting, 0, z_end_sitting]  # x,y,z rotations then translations
         pos = Spot.moving(t, start_frame_pos, end_frame_pos, pos)
 
         if (t == 1) & (pawing == False):
@@ -792,10 +757,8 @@ while (continuer):
                     (-Spot.d-L_paw*sin(alpha_pawing) -
                      pos_sit_init[2])*(joypal+1)/2
 
-                thetarf = Spot.IK(Spot.L0, Spot.L1, Spot.L2,
-                                  Spot.d, pos[3], pos[4], pos[5], -1)[0]
-                thetalf = Spot.IK(Spot.L0, Spot.L1, Spot.L2,
-                                  Spot.d, pos[0], pos[1], pos[2], -1)[0]
+                thetarf = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[3], pos[4], pos[5], -1)[0]
+                thetalf = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[0], pos[1], pos[2], -1)[0]
                 # update of right front leg absolute position
                 legrf = Spot.FK(thetarf, -1)
                 leglf = Spot.FK(thetalf, -1)
@@ -812,13 +775,10 @@ while (continuer):
                 y_spot_sit = pos[14]
                 z_spot_sit = pos[15]
 
-                M = Spot.xyz_rotation_matrix(
-                    theta_spot_sit[3], theta_spot_sit[4], theta_spot_sit[2]+theta_spot_sit[5], False)
+                M = Spot.xyz_rotation_matrix(theta_spot_sit[3], theta_spot_sit[4], theta_spot_sit[2]+theta_spot_sit[5], False)
 
-                paw_rf = Spot.new_coordinates(
-                    M, xlegrf, ylegrf, zlegrf, x_spot_sit[1], y_spot_sit[1], z_spot_sit[1])
-                paw_lf = Spot.new_coordinates(
-                    M, xleglf, yleglf, zleglf, x_spot_sit[1], y_spot_sit[1], z_spot_sit[1])
+                paw_rf = Spot.new_coordinates( M, xlegrf, ylegrf, zlegrf, x_spot_sit[1], y_spot_sit[1], z_spot_sit[1])
+                paw_lf = Spot.new_coordinates( M, xleglf, yleglf, zleglf, x_spot_sit[1], y_spot_sit[1], z_spot_sit[1])
 
                 x_spot_sit[3] = paw_rf[0]
                 y_spot_sit[3] = paw_rf[1]
@@ -886,10 +846,8 @@ while (continuer):
             if (peeing == True):
                 print(joype)
                 pos[9] = pos_shift_init[9] + (0-pos_shift_init[9])*(joype+1)/2
-                pos[10] = pos_shift_init[10] + \
-                    (130-pos_shift_init[10])*(joype+1)/2
-                pos[11] = pos_shift_init[11] + \
-                    (-20-pos_shift_init[11])*(joype+1)/2
+                pos[10] = pos_shift_init[10] + (130-pos_shift_init[10])*(joype+1)/2
+                pos[11] = pos_shift_init[11] + (-20-pos_shift_init[11])*(joype+1)/2
 
                 thetalr = Spot.IK(Spot.L0, Spot.L1, Spot.L2,
                                   Spot.d, pos[9], pos[10], pos[11], 1)[0]
@@ -902,10 +860,8 @@ while (continuer):
                 x_spot_shift = pos[13]
                 y_spot_shift = pos[14]
                 z_spot_shift = pos[15]
-                M = Spot.xyz_rotation_matrix(
-                    theta_spot_shift[3], theta_spot_shift[4], theta_spot_shift[2]+theta_spot_shift[5], False)
-                pee_lr = Spot.new_coordinates(
-                    M, xleglr, yleglr, zleglr, x_spot_shift[1], y_spot_shift[1], z_spot_shift[1])
+                M = Spot.xyz_rotation_matrix(theta_spot_shift[3], theta_spot_shift[4], theta_spot_shift[2]+theta_spot_shift[5], False)
+                pee_lr = Spot.new_coordinates(M, xleglr, yleglr, zleglr, x_spot_shift[1], y_spot_shift[1], z_spot_shift[1])
 
                 x_spot_shift[5] = pee_lr[0]
                 y_spot_shift[5] = pee_lr[1]
@@ -983,20 +939,16 @@ while (continuer):
             setText(disptext+chans)
 
         if (t < 0.25):
-            end_frame_pos = [x_angle_twisting, y_angle_twisting, z_angle_twisting,
-                             x_offset, 0, b_height]  # x,y,z rotations then translations
+            end_frame_pos = [x_angle_twisting, y_angle_twisting, z_angle_twisting, x_offset, 0, b_height]  # x,y,z rotations then translations
             pos = Spot.moving(t*4, start_frame_pos, end_frame_pos, pos)
         if (t >= 0.25) & (t < 0.5):
-            end_frame_pos = [x_angle_twisting, y_angle_twisting, z_angle_twisting,
-                             x_offset, 0, b_height]  # x,y,z rotations then translations
+            end_frame_pos = [x_angle_twisting, y_angle_twisting, z_angle_twisting, x_offset, 0, b_height]  # x,y,z rotations then translations
             pos = Spot.moving((t-0.25)*4, end_frame_pos, start_frame_pos, pos)
         if (t >= 0.5) & (t < 0.75):
-            end_frame_pos = [-x_angle_twisting, -y_angle_twisting, -
-                             z_angle_twisting, x_offset, 0, b_height]
+            end_frame_pos = [-x_angle_twisting, -y_angle_twisting, - z_angle_twisting, x_offset, 0, b_height]
             pos = Spot.moving((t-0.5)*4, start_frame_pos, end_frame_pos, pos)
         if (t >= 0.75) & (t <= 1):
-            end_frame_pos = [-x_angle_twisting, -y_angle_twisting, -
-                             z_angle_twisting, x_offset, 0, b_height]
+            end_frame_pos = [-x_angle_twisting, -y_angle_twisting, - z_angle_twisting, x_offset, 0, b_height]
             pos = Spot.moving((t-0.75)*4, end_frame_pos, start_frame_pos, pos)
 
     xc = steering * cos(walking_direction)
@@ -1007,14 +959,10 @@ while (continuer):
     # absolute center y position
     center_y = y_spot[0]+(xc*sin(theta_spot[2])+yc*cos(theta_spot[2]))
 
-    thetalf = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d,
-                      pos[0], pos[1], pos[2], 1)[0]
-    thetarf = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d,
-                      pos[3], pos[4], pos[5], -1)[0]
-    thetarr = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d,
-                      pos[6], pos[7], pos[8], -1)[0]
-    thetalr = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d,
-                      pos[9], pos[10], pos[11], 1)[0]
+    thetalf = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[0], pos[1], pos[2], 1)[0]
+    thetarf = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[3], pos[4], pos[5], -1)[0]
+    thetarr = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[6], pos[7], pos[8], -1)[0]
+    thetalr = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[9], pos[10], pos[11], 1)[0]
 
     stance = [False, False, False, False]
     if (pos[15][2] < 10.01):
@@ -1027,8 +975,7 @@ while (continuer):
         stance[3] = True
 
     if (anim == True):
-        SpotAnim.animate(pos, t, pi/12, -135/180*pi, Angle, center_x, center_y, thetalf,
-                         thetarf, thetarr, thetalr, walking_speed, walking_direction, steering, stance)
+        SpotAnim.animate(pos, t, pi/12, -135/180*pi, Angle, center_x, center_y, thetalf, thetarf, thetarr, thetalr, walking_speed, walking_direction, steering, stance)
         # SpotAnim.animate(pos,t,pi/2,-0/180*pi,Angle,center_x,center_y,thetalf,thetarf,thetarr,thetalr,walking_speed,walking_direction,steering,stance)
         # SpotAnim.animate(pos,t,0,-0/180*pi,Angle,center_x,center_y,thetalf,thetarf,thetarr,thetalr,walking_speed,walking_direction,steering,stance)
 
@@ -1084,10 +1031,8 @@ while (continuer):
     """ CG update """
     CG = SpotCG.CG_calculation(thetalf, thetarf, thetarr, thetalr)
     # Calculation of CG absolute position
-    M = Spot.xyz_rotation_matrix(
-        theta_spot[0], theta_spot[1], theta_spot[2], False)
-    CGabs = Spot.new_coordinates(
-        M, CG[0], CG[1], CG[2], x_spot[1], y_spot[1], z_spot[1])
+    M = Spot.xyz_rotation_matrix( theta_spot[0], theta_spot[1], theta_spot[2], False)
+    CGabs = Spot.new_coordinates( M, CG[0], CG[1], CG[2], x_spot[1], y_spot[1], z_spot[1])
 
     """ Data Logging """
     ta = time()
@@ -1097,8 +1042,7 @@ while (continuer):
     sCG = [(CG[0]-pos[13][6])/dtt, (CG[1]-pos[14][6])/dtt]  # in mm/s
     aCG = [(sCG[0]-sCGo[0])/dtt, (sCG[1]-sCGo[1])/dtt]  # in mm/s²
     ZMP = [CG[0]-CGabs[2]/9810*aCG[0], CG[1]-CGabs[2]/9810*aCG[1]]  # in mm
-    dCG = SpotCG.CG_distance(
-        x_spot[2:6], y_spot[2:6], z_spot[2:6], CGabs[0], CGabs[1], stance)
+    dCG = SpotCG.CG_distance(x_spot[2:6], y_spot[2:6], z_spot[2:6], CGabs[0], CGabs[1], stance)
 
     if (sum(stance) > 2):
         xZMP.append(0)
