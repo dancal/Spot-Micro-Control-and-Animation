@@ -502,7 +502,12 @@ while (continuer):
                         stop    = True
                     joybut[but_lie] = int(stop == True)
                 elif (event.joy == 3 and event.button == 1): # B
-                    print('event.button B')
+                    print('event.button B - [ but_twist ]')
+                    if (stop == True):
+                        stop    = False
+                    else:
+                        stop    = True
+                    joybut[but_twist] = int(stop == True)
                 elif (event.joy == 3 and event.button == 3): # X
                     print('event.button X - [Infinity Standstill]')
                     if (stop == True):
@@ -642,8 +647,8 @@ while (continuer):
         setText(disptext+chans)
 
     if (joybut[but_sit] == 1) & (sitting == True) & (stop == False) & (lock == False):  # Quit sitting mode
-        stop = True
-        lock = True
+        stop        = True
+        lock        = True
 
     #SHIFTING and PEEING
     if (joybut[but_pee] == 1) & (shifting == False) & (Free == True):  # Enter in sitting mode
