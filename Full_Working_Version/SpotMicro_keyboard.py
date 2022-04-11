@@ -23,6 +23,7 @@ from time import sleep, time
 from math import pi, sin, cos, atan, atan2, sqrt
 import numpy as np
 import pygame
+import ev3dev.auto as ev3
 
 #import os
 #os.environ["SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
@@ -455,18 +456,9 @@ while (continuer):
     if (iangle == angle_count):
         iangle = 0
 
-    for event in pygame.event.get():  # User did something.
-        if event.type == pygame.QUIT:  # If user clicked close.
-            continuer = False
-        #if event.type == pygame.MOUSEBUTTONDOWN:
-        #    mouseclick = True
-        #else:
-        #    mouseclick = False
-        #keys_pressed = pygame.key.get_pressed()
-        #print(keys_pressed)
-        if (joystick1 > 0):
-            for i in range (0,6): #read analog joystick position
-                joypos[i] = joystick.get_axis(i)  
+    if (joystick1 > 0):
+        for i in range (0,6): #read analog joystick position
+            joypos[i] = joystick.get_axis(i)  
             
             if (joystart_leftpaw==True)&(joypos[pos_leftpaw]==0):
                 joypos[pos_leftpaw]= -1
@@ -481,7 +473,10 @@ while (continuer):
             for i in range (0,15):  #read buttons
                 joybut[i] = joystick.get_button(i)
             joyhat = joystick.get_hat(0)  #read hat  
-        else:
+    else:
+        for event in pygame.event.get():  # User did something.
+            if event.type == pygame.QUIT:  # If user clicked close.
+                continuer = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     joybut[but_walk_crawl] = 1
