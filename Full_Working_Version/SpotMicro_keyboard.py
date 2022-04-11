@@ -454,6 +454,7 @@ tt                  = time()  # initialize time for speed and acceleration calcu
 joystart_rightpaw   = True
 joystart_leftpaw    = True
 clock_tick          = 100
+attention_ready     = True
 numaxes             = joystick.get_numaxes()
 numbuttons          = joystick.get_numbuttons()
 hats                = joystick.get_numhats()
@@ -481,39 +482,69 @@ while (continuer):
                 print("Joystick button pressed.", event)
                 if (event.joy == 1 and event.button == 11): # START
                     print('event.button START')
-                if (event.joy == 1 and event.button == 5): # LIST
+                elif (event.joy == 1 and event.button == 5): # LIST
                     print('event.button list')
-                if (event.joy == 1 and event.button == 9): # return
+                elif (event.joy == 1 and event.button == 9): # return
                     print('event.button RETURN')
-                if (event.joy == 1 and event.button == 8): # home
+                elif (event.joy == 1 and event.button == 8): # home
                     print('event.button HOME')
 
-                if (event.joy == 3 and event.button == 10): # SELECT
+                elif (event.joy == 3 and event.button == 10): # SELECT
                     print('event.button SELECT')
-                if (event.joy == 3 and event.button == 11): # START
+                elif (event.joy == 3 and event.button == 11): # START
                     print('event.button START')
 
-                if (event.joy == 3 and event.button == 0): # A
-                    print('event.button A')
-                if (event.joy == 3 and event.button == 1): # B
+                elif (event.joy == 3 and event.button == 0): # A
+                    print('event.button A [ LIE ]')
+                    if (stop == True):
+                        stop    = False
+                    else:
+                        stop    = True
+                    joybut[but_lie] = int(stop == True)
+                elif (event.joy == 3 and event.button == 1): # B
                     print('event.button B')
-                if (event.joy == 3 and event.button == 3): # X
-                    print('event.button X')
-                if (event.joy == 3 and event.button == 4): # Y
-                    print('event.button Y')
+                elif (event.joy == 3 and event.button == 3): # X
+                    print('event.button X - [Infinity Standstill]')
+                    if (stop == True):
+                        stop    = False
+                    else:
+                        stop    = True
+                    joybut[but_walk_crawl] = int(stop == True)
+                elif (event.joy == 3 and event.button == 4): # Y
+                    print('event.button Y - [SITDOWN]')
+                    joybut[but_sit]     = 1
+                    if (stop == True):
+                        stop    = False
+                    else:
+                        stop    = True
+                    joybut[but_sit]     = int(stop == True)
+                    #joypos[pos_turn]    = 1
+                    #but_walk_trot   = 8
+                    #but_walk_crawl  = 7
+                    #but_sit         = 2
+                    #but_lie         = 3
+                    #but_twist       = 1
+                    #but_pee         = 0
+                    #but_move        = 5
+                    #but_anim        = 4
 
-                if (event.joy == 3 and event.button == 6): # L1
-                    #print('event.button L1')
+                    #pos_frontrear   = 3
+                    #pos_leftright   = 2
+                    #pos_turn        = 0
+                    #pos_rightpaw    = 4
+                    #pos_leftpaw     = 5  # also used for hind leg lifting when peeing
+
+                elif (event.joy == 3 and event.button == 6): # L1
+                    # SPEED UP
                     clock_tick  = clock_tick + 50
-                if (event.joy == 3 and event.button == 8): # L2
-                    #print('event.button L2')
+                elif (event.joy == 3 and event.button == 8): # L2
+                    # SPEED DOWN
                     clock_tick  = clock_tick - 50
-                if (event.joy == 3 and event.button == 7): # R1
+                elif (event.joy == 3 and event.button == 7): # R1
                     print('event.button R1')
-                if (event.joy == 3 and event.button == 9): # R2
+                elif (event.joy == 3 and event.button == 9): # R2
                     print('event.button R2')
 
-                #joybut[event.button]    = 1
             elif event.type == pygame.JOYBUTTONUP:
                 for i in range(0, numaxes):
                     joypos[i] = 0
@@ -533,24 +564,19 @@ while (continuer):
                 elif (event.axis == 1 or event.axis == 2):
                     joybut[but_walk_crawl] = 1
                     joypos[pos_frontrear]  = event.value
-                else:
+
+                if (event.value == 0):
+                    print('JOYAXISMOTION Release')
                     for i in range(0, numaxes):
                         joypos[i] = 0
                     for i in range(0, numbuttons):
                         joybut[i] = 0
-                # input = self.get_axis(event.joy, event.axis, event.value)
-            #if event.type == pygame.JOYBUTTONUP:
-            #   print("Joystick button released.")
-        #for i in range (0,numaxes): #read analog joystick position
-        #    joypos[i] = joystick.get_axis(i)  
-        #for i in range (0,numbuttons):  #read buttons
-        #    #joybut[i] = joystick.get_button(i)
-        #for i in range(numbuttons):
-        #    button = joystick.get_button(i)
-        #    #print("Button {:>2} value: {}".format(i, button))
-        #joyhat = joystick.get_hat(0)  #read hat  
-
-        #print(joypos)
+            else:
+                #print('all Release')
+                for i in range(0, numaxes):
+                    joypos[i] = 0
+                for i in range(0, numbuttons):
+                    joybut[i] = 0               
     else:
         for event in pygame.event.get():  # User did something.
             if event.type == pygame.QUIT:  # If user clicked close.
@@ -576,8 +602,7 @@ while (continuer):
 
     """Animation"""
     if (joybut[but_walk_crawl] == 0) & (joybut[but_sit] == 0) & (joybut[but_pee] == 0) & (joybut[but_lie] == 0) & (joybut[but_twist] == 0) & (joybut[but_move] == 0) & (joybut[but_anim] == 0) & (lock == True):
-        lock                    = False
-        #joybut[but_walk_crawl]  = 1
+        lock = False
 
     # WALKING
     if (joybut[but_walk_crawl] == 1) & (walking == True) & (stop == False) & (lock == False):  # Quit walk mode
@@ -593,24 +618,25 @@ while (continuer):
 
     if (joybut[but_walk_crawl] == 1) & (walking == False) & (Free == True):  # Enter in walk mode
         walking = True
-        stop = False
-        Free = False
-        t = 0
-        tstart = 1
-        tstop = 1000
-        lock = True
-        trec = int(t)
+        stop    = False
+        Free    = False
+        t       = 0
+        tstart  = 1
+        tstop   = 1000
+        lock    = True
+        trec    = int(t)
         setRGB(146, 208, 80)
         disptext = 'Walking...      '
         setText(disptext+chans)
+        attention_ready = False
 
      # SITTING and GIVING PAW
     if (joybut[but_sit] == 1) & (sitting == False) & (Free == True):  # Enter in sitting mode
         sitting = True
-        stop = False
-        Free = False
-        t = 0
-        lock = True
+        stop    = False
+        Free    = False
+        t       = 0
+        lock    = True
         setRGB(255, 153, 51)
         disptext = 'Sitting...      '
         setText(disptext+chans)
@@ -621,11 +647,11 @@ while (continuer):
 
     #SHIFTING and PEEING
     if (joybut[but_pee] == 1) & (shifting == False) & (Free == True):  # Enter in sitting mode
-        shifting = True
-        stop = False
-        Free = False
-        t = 0
-        lock = True
+        shifting    = True
+        stop        = False
+        Free        = False
+        t           = 0
+        lock        = True
         setRGB(255, 255, 255)
         disptext = 'Peeing...       '
         setText(disptext+chans)
@@ -777,19 +803,17 @@ while (continuer):
                 Derivative_AngleX = 0
                 Derivative_AngleY = 0
 
-            theta_spot[3] = - \
-                (Kp*Angle[0]+Ki*Integral_Angle[0]+Kd*Derivative_AngleX)
-            theta_spot[4] = (Kp*Angle[1]+Ki*Integral_Angle[1] +
-                             Kd*Derivative_AngleY) + bend_angle
-            theta_spot[0] = Angle[0]
-            theta_spot[1] = -Angle[1]
-            x_offset = (height+CG[2])*sin(Kp*Angle[1] + Ki*Integral_Angle[1]+Kd*Derivative_AngleY)
+            theta_spot[3]   = -(Kp*Angle[0]+Ki*Integral_Angle[0] + Kd*Derivative_AngleX)
+            theta_spot[4]   = (Kp*Angle[1]+Ki*Integral_Angle[1] + Kd*Derivative_AngleY) + bend_angle
+            theta_spot[0]   = Angle[0]
+            theta_spot[1]   = -Angle[1]
+            x_offset        = (height+CG[2])*sin(Kp*Angle[1] + Ki*Integral_Angle[1]+Kd*Derivative_AngleY)
         else:
-            theta_spot[3] = 0
-            theta_spot[4] = bend_angle
-            theta_spot[0] = 0
-            theta_spot[1] = 0
-            x_offset = 0
+            theta_spot[3]   = 0
+            theta_spot[4]   = bend_angle
+            theta_spot[0]   = 0
+            theta_spot[1]   = 0
+            x_offset        = 0
 
         if (t < tstart):
             """ start """
@@ -822,6 +846,7 @@ while (continuer):
             trans = 0
             trot = False
             print('waiting')
+            attention_ready = True
 
     if (sitting == True):
         alpha_sitting = -30/180*pi
