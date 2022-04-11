@@ -10,15 +10,17 @@ from math import pi, sin, cos, atan, atan2, sqrt
 import numpy as np
 import pygame
 import Spotmicro_lib_020
+
 Spot = Spotmicro_lib_020.Spot()
 SpotCG = Spotmicro_Gravity_Center_lib_007.SpotCG()
+
 pygame.init()
 # seems necessary to have access to keyboard
+pygame.display.set_caption("SPOTMICRO")
 screen = pygame.display.set_mode((600, 600))
 
 
 class SpotAnim:
-
     """Display colors """
     BLACK = (0,   0,   0)
     WHITE = (255, 255, 255)

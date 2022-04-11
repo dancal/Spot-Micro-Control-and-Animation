@@ -23,180 +23,10 @@ from time import sleep, time
 from math import pi, sin, cos, atan, atan2, sqrt
 import numpy as np
 import pygame
-pygame.init()
-# seems necessary to have access to keyboard
-screen = pygame.display.set_mode((600, 600))
-pygame.display.set_caption("SPOTMICRO")
 
-
-Spot = Spotmicro_lib_020.Spot()
-SpotCG = Spotmicro_Gravity_Center_lib_007.SpotCG()
-SpotAnim = Spotmicro_Animate_lib_009.SpotAnim()
-
-
-smallfont = pygame.font.SysFont('Corbel', 20)
-text_animon = smallfont.render('Anim On', True, SpotAnim.BLACK)
-text_animoff = smallfont.render('Anim Off', True, SpotAnim.WHITE)
-text_moveon = smallfont.render('Move On', True, SpotAnim.BLACK)
-text_moveoff = smallfont.render('Move Off', True, SpotAnim.WHITE)
-
-""" Walking parameters """
-b_height = 200
-h_amp2 = 100  # was 100
-v_amp2 = 20  # was 50
-track2 = 58
-h_amp4 = 100  # was 100
-v_amp4 = 30  # was 50
-track4 = 58
-x_offset = 0  # 40
-
-ra_longi = 30  # 30
-ra_lat = 30  # 20
-
-bend_angle = 0
-
-steering = 200  # Initial steering radius (arbitrary)
-walking_direction = 90/180*pi  # Initial steering angle (arbitrary)
-center_x = steering*cos(walking_direction)
-center_y = steering*sin(walking_direction)
-
-stepl2 = 0.16
-stepl4 = 0.125
-
-tstep2 = stepl2/8  # Timing/clock step 0.00666666666666
-tstep4 = 0.006666666666
-
-height = b_height
-
-"""Initialization to 4 steps walk """
-stepl = stepl4
-h_amp = h_amp4
-v_amp = v_amp4
-track = track4
-tstep = tstep4
-
-""" Joystick settings """
-but_walk = 7
-but_sit = 2
-but_lie = 3
-but_twist = 1
-but_pee = 0
-but_move = 5
-but_anim = 4
-
-pos_frontrear = 3
-pos_leftright = 2
-pos_turn = 0
-pos_rightpaw = 4
-pos_leftpaw = 5  # also used for hind leg lifting when peeing
-
-joypos = np.zeros(6)
-joybut = np.zeros(15)
-
-joype = -1  # Initial joysick value for peeing
-joypar = -1  # Initial joysick value for pawing right
-joypal = -1  # Initial joysick value for pawing left
-joybendover = -1  # Initial joystick value for bending over
-joyleanback = -1  # Initial joystick value for pawing left
-
-
-""" Data logging intialization"""
-distance = []  # distance to sustentation limit record
-balance = []  # balance status (True or False)
-timing = []  # timing to plot distance
-xCG = []
-yCG = []
-xCenter = []
-yCenter = []
-xZMP = []
-yZMP = []
-Integral_Angle = [0, 0]
-sCG = [0, 0]  # Center of Gravity speed
-aCG = [0, 0]  # Center of Gravity acceleration
-tt = 0  # time to calculate speed and acceleration
-dtt = 0  # real time step
-ZMP = [0, 0]
-
-
-""" States initialization"""
-anim = True         # animation display
-Free = True         # Spot is ready to receive new command
-sitting = False
-walking = False     # walking sequence activation
-lying = False
-twisting = False
-pawing = False
-shifting = False
-peeing = False
-trot = False
-
-stop = False    # walking stop sequence activation
-lock = False    # locking start key temporarily in order to avoid start and stop if start key is pressed too long
-
-SERVO_Move = True     # servo move activation
-IMU_Comp = False
-
-lockmouse = False
-mouseclick = False
-
-stance = [True, True, True, True]
-cw = 1
-walking_speed = 0
-walking_direction = 0
-steeering = 1e6
-
-""" Complementary filter (IMU) initialization """
-module = 0
-iangle = 0
-anglex_buff = np.zeros(10)
-angley_buff = np.zeros(10)
-zeroangle_x = 0.0338
-zeroangle_y = -0.0594
-angle_count = 1  # number of samples to calculate average angles
-Tcomp = 0.02
-angle = np.zeros(2)
-Angle = np.zeros(2)
-Angle_old = np.zeros(2)
-
-
-""" Counter for Battery check initialization """
-Bat = 0  # counter for battery check
-
-"""Horizontal Compensation PID Gains """
-Kp = 4
-Ki = 22  # was up to 22
-Kd = 0  # was up to 0.08
-
-"""Servo trimming """
-xtlf = 14
-ytlf = 0
-ztlf = 0
-
-xtrf = 14
-ytrf = 0
-ztrf = 3
-
-xtrr = 14
-ytrr = 0
-ztrr = 0
-
-xtlr = 14
-ytlr = 0
-ztlr = 0
-
-
-""" Main loop intialization """
-continuer = True
-clock = pygame.time.Clock()
-t = 0  # Initializing timing/clock
-tstart = 1  # End of start sequence
-tstop = 1000  # Start of stop sequence by default
-trans = 0
-transtep = 0.025
-
-""" Display Management """
-DISPLAY_TEXT_ADDR = 0x3e
-DISPLAY_RGB_ADDR = 0x60
+#import os
+#os.environ["SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
+#os.environ["SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "True"
 
 
 def setRGB(r, g, b):
@@ -241,10 +71,7 @@ def setText(text):
         ##i2c.writeto (DISPLAY_TEXT_ADDR,bytes(msg), stop = False)
         ## print('setText = ', msg)
 
-
 """ Angle measurement Complementary filter """
-
-
 def comp_filter(angle, t, T):
     # Complementary filter calculates body angles around xt and y axis from IMU data
     ## acc = mpu.acceleration
@@ -272,55 +99,271 @@ def comp_filter(angle, t, T):
 
     return [anglex, angley]
 
-
 def servo_moving(pos, move):
 
-    thetalf_reply = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[0]+xtlf, pos[1]+ytlf, pos[2]+ztlf, 1)
-    thetarf_reply = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[3]+xtrf, pos[4]+ytrf, pos[5]+ztrf, -1)
-    thetarr_reply = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[6]+xtrr, pos[7]+ytrr, pos[8]+ztrr, -1)
-    thetalr_reply = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[9]+xtlr, pos[10]+ytlr, pos[11]+ztlr, 1)
+    global orgthetalf
+    global orgthetarf
+    global orgthetarr
+    global orgthetalr
 
-    thetalf = thetalf_reply[0]
-    thetarf = thetarf_reply[0]
-    thetarr = thetarr_reply[0]
-    thetalr = thetalr_reply[0]
+    thetalf_reply   = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[0]+xtlf, pos[1]+ytlf, pos[2]+ztlf, 1)
+    thetarf_reply   = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[3]+xtrf, pos[4]+ytrf, pos[5]+ztrf, -1)
+    thetarr_reply   = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[6]+xtrr, pos[7]+ytrr, pos[8]+ztrr, -1)
+    thetalr_reply   = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[9]+xtlr, pos[10]+ytlr, pos[11]+ztlr, 1)
+
+    thetalf         = thetalf_reply[0]
+    thetarf         = thetarf_reply[0]
+    thetarr         = thetarr_reply[0]
+    thetalr         = thetalr_reply[0]
 
     if move == True:
         if (thetalf_reply[1] == False):
             try:
-                ShoulderAngle = thetalf[0]/pi*180 * Spot.angle_scale_factor_lf1*Spot.dir01+Spot.zero01
-                LegAngle = thetalf[1]/pi*180 * Spot.angle_scale_factor_lf2*Spot.dir02+Spot.zero02
-                FeetAngle = thetalf[2]/pi*180 * Spot.angle_scale_factor_lf3*Spot.dir03+Spot.zero03
-                print('Front_LEFT : ', ShoulderAngle, ', ', LegAngle, ', ', FeetAngle)
+                ShoulderAngle   = int(thetalf[0]/pi*180 * Spot.angle_scale_factor_lf1*Spot.dir01+Spot.zero01)
+                LegAngle        = int(thetalf[1]/pi*180 * Spot.angle_scale_factor_lf2*Spot.dir02+Spot.zero02)
+                FeetAngle       = int(thetalf[2]/pi*180 * Spot.angle_scale_factor_lf3*Spot.dir03+Spot.zero03)
+                if (orgthetalf[0] == ShoulderAngle and orgthetalf[1] == LegAngle and orgthetalf[2] == FeetAngle):
+                    return
+                #else:
+                #    print('Front_LEFT : ', ShoulderAngle, ', ', LegAngle, ', ', FeetAngle)
+
+                orgthetalf      = [ShoulderAngle, LegAngle, FeetAngle]
             except ValueError:
                 print('Angle out of Range')
 
         if (thetarf_reply[1] == False):
             try:
-                ShoulderAngle = thetarf[0]/pi*180 * Spot.angle_scale_factor_rf1*Spot.dir04+Spot.zero04
-                LegAngle = thetarf[1]/pi*180 * Spot.angle_scale_factor_rf2*Spot.dir05+Spot.zero05
-                FeetAngle = thetarf[2]/pi*180 * Spot.angle_scale_factor_rf3*Spot.dir06+Spot.zero06
-                print('Front_RIGHT : ', ShoulderAngle, ', ', LegAngle, ', ', FeetAngle)
+                ShoulderAngle   = int(thetarf[0]/pi*180 * Spot.angle_scale_factor_rf1*Spot.dir04+Spot.zero04)
+                LegAngle        = int(thetarf[1]/pi*180 * Spot.angle_scale_factor_rf2*Spot.dir05+Spot.zero05)
+                FeetAngle       = int(thetarf[2]/pi*180 * Spot.angle_scale_factor_rf3*Spot.dir06+Spot.zero06)
+                if (orgthetarf[0] == ShoulderAngle and orgthetarf[1] == LegAngle and orgthetarf[2] == FeetAngle):
+                    return
+                #else:
+                #    print('Front_RIGHT : ', ShoulderAngle, ', ', LegAngle, ', ', FeetAngle)
+
+                orgthetarf      = [ShoulderAngle, LegAngle, FeetAngle]
             except ValueError:
                 print('Angle out of Range')
 
         if (thetarr_reply[1] == False):
             try:
-                ShoulderAngle = thetarr[0]/pi*180 * Spot.angle_scale_factor_rr1*Spot.dir07+Spot.zero07
-                LegAngle = thetarr[1]/pi*180 * Spot.angle_scale_factor_rr2*Spot.dir07+Spot.zero08
-                FeetAngle = thetarr[2]/pi*180 * Spot.angle_scale_factor_rr3*Spot.dir09+Spot.zero09
-                print('REAR_RIGHT : ', ShoulderAngle, ', ', LegAngle, ', ', FeetAngle)
+                ShoulderAngle   = int(thetarr[0]/pi*180 * Spot.angle_scale_factor_rr1*Spot.dir07+Spot.zero07)
+                LegAngle        = int(thetarr[1]/pi*180 * Spot.angle_scale_factor_rr2*Spot.dir07+Spot.zero08)
+                FeetAngle       = int(thetarr[2]/pi*180 * Spot.angle_scale_factor_rr3*Spot.dir09+Spot.zero09)
+                
+                if (orgthetarr[0] == ShoulderAngle and orgthetarr[1] == LegAngle and orgthetarr[2] == FeetAngle):
+                    return
+                #else:
+                #    print('REAR_RIGHT : ', ShoulderAngle, ', ', LegAngle, ', ', FeetAngle)
+
+                orgthetarr      = [ShoulderAngle, LegAngle, FeetAngle]
             except ValueError:
                 print('Angle out of Range')
 
         if (thetalr_reply[1] == False):
             try:
-                ShoulderAngle = thetalr[0]/pi*180 * Spot.angle_scale_factor_lr1*Spot.dir10+Spot.zero10
-                LegAngle = thetalr[1]/pi*180 * Spot.angle_scale_factor_lr2*Spot.dir11+Spot.zero11
-                FeetAngle = thetalr[2]/pi*180 * Spot.angle_scale_factor_lr3*Spot.dir12+Spot.zero12
-                print('REAR_LEFT : ', ShoulderAngle, ', ', LegAngle, ', ', FeetAngle)
+                ShoulderAngle   = int(thetalr[0]/pi*180 * Spot.angle_scale_factor_lr1*Spot.dir10+Spot.zero10)
+                LegAngle        = int(thetalr[1]/pi*180 * Spot.angle_scale_factor_lr2*Spot.dir11+Spot.zero11)
+                FeetAngle       = int(thetalr[2]/pi*180 * Spot.angle_scale_factor_lr3*Spot.dir12+Spot.zero12)
+                
+                if (orgthetalr[0] == ShoulderAngle and orgthetalr[1] == LegAngle and orgthetalr[2] == FeetAngle):
+                    return
+                #else:
+                #    print('REAR_LEFT : ', ShoulderAngle, ', ', LegAngle, ', ', FeetAngle)
+
+                orgthetalr      = [ShoulderAngle, LegAngle, FeetAngle]
             except ValueError:
                 print('Angle out of Range')
+
+        print(orgthetalf, orgthetarf, orgthetarr, orgthetalr)
+
+
+
+anim            = True         # animation display
+SERVO_Move      = False     # servo move activation
+IMU_Comp        = False
+
+pygame.init()
+if anim == True:
+    SpotAnim    = Spotmicro_Animate_lib_009.SpotAnim()
+
+Spot            = Spotmicro_lib_020.Spot()
+SpotCG          = Spotmicro_Gravity_Center_lib_007.SpotCG()
+
+""" Joystick Init """
+#pygame.event.set_grab(True)
+#pygame.joystick.init()
+#joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
+#for joy in joysticks:
+#    print(joy.get_name(), joy.get_id(), joy.get_guid(), joy.get_instance_id())
+#print(joysticks)
+#joystick = pygame.joystick.Joystick(0)
+#joystick.init()
+joystick1       = pygame.joystick.get_count()
+if joystick1 == 0:
+    # No joysticks!
+    print("Sorry, Game have found that no joystick is attached.")
+else:
+    joystick = pygame.joystick.Joystick(0)
+    joystick.init()
+
+""" Walking parameters """
+b_height        = 200
+h_amp2          = 100   # was 100
+v_amp2          = 20    # was 50
+track2          = 58
+h_amp4          = 100   # was 100
+v_amp4          = 30    # was 50
+track4          = 58
+x_offset        = 0     # 40
+
+ra_longi        = 30    # 30
+ra_lat          = 40    # 20
+
+bend_angle      = 0
+
+steering            = 200  # Initial steering radius (arbitrary)
+walking_direction   = 90/180*pi  # Initial steering angle (arbitrary)
+center_x            = steering*cos(walking_direction)
+center_y            = steering*sin(walking_direction)
+
+stepl2              = 0.16
+stepl4              = 0.125
+tstep2              = stepl2/8  # Timing/clock step 0.00666666666666
+tstep4              = 0.006666666666
+
+height              = b_height
+
+"""Initialization to 4 steps walk """
+stepl               = stepl4
+h_amp               = h_amp4
+v_amp               = v_amp4
+track               = track4
+tstep               = tstep4
+
+""" Joystick settings """
+but_walk_trot   = 8
+but_walk_crawl  = 7
+but_sit         = 2
+but_lie         = 3
+but_twist       = 1
+but_pee         = 0
+but_move        = 5
+but_anim        = 4
+
+pos_frontrear   = 3
+pos_leftright   = 2
+pos_turn        = 0
+pos_rightpaw    = 4
+pos_leftpaw     = 5  # also used for hind leg lifting when peeing
+
+joypos          = np.zeros(6)
+joybut          = np.zeros(15)
+
+joype           = -1  # Initial joysick value for peeing
+joypar          = -1  # Initial joysick value for pawing right
+joypal          = -1  # Initial joysick value for pawing left
+joybendover     = -1  # Initial joystick value for bending over
+joyleanback     = -1  # Initial joystick value for pawing left
+
+
+""" Data logging intialization"""
+distance        = []  # distance to sustentation limit record
+balance         = []  # balance status (True or False)
+timing          = []  # timing to plot distance
+xCG             = []
+yCG             = []
+xCenter         = []
+yCenter         = []
+xZMP            = []
+yZMP            = []
+Integral_Angle  = [0, 0]
+sCG             = [0, 0]  # Center of Gravity speed
+aCG             = [0, 0]  # Center of Gravity acceleration
+tt              = 0  # time to calculate speed and acceleration
+dtt             = 0  # real time step
+ZMP             = [0, 0]
+
+
+""" States initialization"""
+Free        = True         # Spot is ready to receive new command
+sitting     = False
+walking     = False     # walking sequence activation
+lying       = False
+twisting    = False
+pawing      = False
+shifting    = False
+peeing      = False
+trot        = False
+
+stop        = False    # walking stop sequence activation
+lock        = False    # locking start key temporarily in order to avoid start and stop if start key is pressed too long
+
+#lockmouse   = False
+#mouseclick  = False
+
+stance              = [True, True, True, True]
+cw                  = 1
+walking_speed       = 0
+walking_direction   = 0
+steeering           = 1e6
+
+""" Complementary filter (IMU) initialization """
+module              = 0
+iangle              = 0
+anglex_buff         = np.zeros(10)
+angley_buff         = np.zeros(10)
+zeroangle_x         = 0.0338
+zeroangle_y         = -0.0594
+angle_count         = 1  # number of samples to calculate average angles
+Tcomp               = 0.02
+angle               = np.zeros(2)
+Angle               = np.zeros(2)
+Angle_old           = np.zeros(2)
+
+""" Counter for Battery check initialization """
+Bat                 = 0  # counter for battery check
+
+"""Horizontal Compensation PID Gains """
+Kp = 4
+Ki = 22  # was up to 22
+Kd = 0  # was up to 0.08
+
+"""Servo trimming """
+xtlf = 14
+ytlf = 0
+ztlf = 0
+
+xtrf = 14
+ytrf = 0
+ztrf = 3
+
+xtrr = 14
+ytrr = 0
+ztrr = 0
+
+xtlr = 14
+ytlr = 0
+ztlr = 0
+
+orgthetalf         = [0,0,0]
+orgthetarf         = [0,0,0]
+orgthetarr         = [0,0,0]
+orgthetalr         = [0,0,0]
+
+""" Main loop intialization """
+continuer       = True
+clock           = pygame.time.Clock()
+t               = 0  # Initializing timing/clock
+tstart          = 1  # End of start sequence
+tstop           = 1000  # Start of stop sequence by default
+trans           = 0
+transtep        = 0.025
+
+""" Display Management """
+DISPLAY_TEXT_ADDR = 0x3e
+DISPLAY_RGB_ADDR = 0x60
+
 
 
 """ i2C Initialization"""
@@ -349,11 +392,6 @@ def servo_moving(pos, move):
 """ """
 
 
-""" Joystick Init """
-pygame.joystick.init()
-##joystick = pygame.joystick.Joystick(0)
-# joystick.init()
-
 """set screen background color"""
 setRGB(127, 127, 255)
 
@@ -374,18 +412,19 @@ thetarf = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos_init[3], pos_init[4], p
 thetarr = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos_init[6], pos_init[7], pos_init[8], -1)[0]
 thetalr = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos_init[9], pos_init[10], pos_init[11], 1)[0]
 
-CG = SpotCG.CG_calculation(thetalf, thetarf, thetarr, thetalr)
-ZMP = [CG[0], CG[1]]  # ZMP is initialized to CG position
+CG      = SpotCG.CG_calculation(thetalf, thetarf, thetarr, thetalr)
+ZMP     = [CG[0], CG[1]]  # ZMP is initialized to CG position
+
 # Calculation of CG absolute position
-M = Spot.xyz_rotation_matrix( theta_spot[0], theta_spot[1], theta_spot[2], False)
-CGabs = Spot.new_coordinates( M, CG[0], CG[1], CG[2], x_spot[1], y_spot[1], z_spot[1])
-dCG = SpotCG.CG_distance( x_spot[2:6], y_spot[2:6], z_spot[2:6], CGabs[0], CGabs[1], stance)
+M       = Spot.xyz_rotation_matrix( theta_spot[0], theta_spot[1], theta_spot[2], False)
+CGabs   = Spot.new_coordinates( M, CG[0], CG[1], CG[2], x_spot[1], y_spot[1], z_spot[1])
+dCG     = SpotCG.CG_distance( x_spot[2:6], y_spot[2:6], z_spot[2:6], CGabs[0], CGabs[1], stance)
 
-x_spot = [0, x_offset, Spot.xlf, Spot.xrf, Spot.xrr, Spot.xlr, CG[0], CGabs[0], dCG[1], ZMP[0]]
-y_spot = [0, 0, Spot.ylf+track, Spot.yrf-track, Spot.yrr - track, Spot.ylr+track, CG[1], CGabs[1], dCG[2], ZMP[1]]
-z_spot = [0, b_height, 0, 0, 0, 0, CG[2], CGabs[2], dCG[3], CGabs[2]]
+x_spot  = [0, x_offset, Spot.xlf, Spot.xrf, Spot.xrr, Spot.xlr, CG[0], CGabs[0], dCG[1], ZMP[0]]
+y_spot  = [0, 0, Spot.ylf+track, Spot.yrf-track, Spot.yrr - track, Spot.ylr+track, CG[1], CGabs[1], dCG[2], ZMP[1]]
+z_spot  = [0, b_height, 0, 0, 0, 0, CG[2], CGabs[2], dCG[3], CGabs[2]]
 
-pos = [-x_offset, track, -b_height, -x_offset, -track, -b_height, -x_offset, -track, -b_height, -x_offset, track, -b_height, theta_spot, x_spot, y_spot, z_spot]
+pos     = [-x_offset, track, -b_height, -x_offset, -track, -b_height, -x_offset, -track, -b_height, -x_offset, track, -b_height, theta_spot, x_spot, y_spot, z_spot]
 
 # Read Battery Voltage
 
@@ -393,91 +432,82 @@ pos = [-x_offset, track, -b_height, -x_offset, -track, -b_height, -x_offset, -tr
 #chans='Bat: '+('%.2f' % (chan.voltage*2.0035))+' V'
 chans = 'Bat: '+('%.2f' % (5*2.0035))+' V'
 
-
 """
 Main Loop
-
 """
-
-
 disptext = 'Ready !         '
 setText(disptext+chans)
 
-tt = time()  # initialize time for speed and acceleration calculation
-joystart_rightpaw = True
-joystart_leftpaw = True
+tt                  = time()  # initialize time for speed and acceleration calculation
+joystart_rightpaw   = True
+joystart_leftpaw    = True
+stop_delay          = 0
 
 while (continuer):
-    clock.tick(30)
-    angle = comp_filter(angle, tstep, Tcomp)
+
+    clock.tick(300)
+    angle               = comp_filter(angle, tstep, Tcomp)
     anglex_buff[iangle] = angle[0]+zeroangle_x
     angley_buff[iangle] = angle[1]+zeroangle_y
-    Angle_old = Angle
-    Angle = [np.mean(anglex_buff), np.mean(angley_buff)]
-    iangle = iangle+1
+    Angle_old           = Angle
+    Angle               = [np.mean(anglex_buff), np.mean(angley_buff)]
+    iangle              = iangle+1
     if (iangle == angle_count):
         iangle = 0
 
     for event in pygame.event.get():  # User did something.
         if event.type == pygame.QUIT:  # If user clicked close.
             continuer = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            mouseclick = True
+        #if event.type == pygame.MOUSEBUTTONDOWN:
+        #    mouseclick = True
+        #else:
+        #    mouseclick = False
+        #keys_pressed = pygame.key.get_pressed()
+        #print(keys_pressed)
+        if (joystick1 > 0):
+            for i in range (0,6): #read analog joystick position
+                joypos[i] = joystick.get_axis(i)  
+            
+            if (joystart_leftpaw==True)&(joypos[pos_leftpaw]==0):
+                joypos[pos_leftpaw]= -1
+            else:
+                joystart_leftpaw = False
+                
+            if (joystart_rightpaw==True)&(joypos[pos_rightpaw]==0):
+                joypos[pos_rightpaw]= -1  
+            else:
+                joystart_rightpaw = False
+                
+            for i in range (0,15):  #read buttons
+                joybut[i] = joystick.get_button(i)
+            joyhat = joystick.get_hat(0)  #read hat  
         else:
-            mouseclick = False
-
-    if event.type == pygame.KEYDOWN:
-        if event.key == pygame.K_LEFT:
-            joybut[but_walk] = 1
-            joypos[pos_leftright] = -1
-        if event.key == pygame.K_RIGHT:
-            joybut[but_walk] = 1
-            joypos[pos_leftright] = 1
-        if event.key == pygame.K_UP:
-            joybut[but_walk] = 1
-            joypos[pos_frontrear] = -1
-        if event.key == pygame.K_DOWN:
-            joybut[but_walk] = 1
-            joypos[pos_frontrear] = 1
-        if event.key == pygame.K_a:
-            joybut[but_move] = 1
-            joybut[but_walk] = 1
-            joypos[pos_turn] = -1
-            joypos[pos_leftright] = -1
-        if event.key == pygame.K_d:
-            joybut[but_move] = 1
-            joybut[but_walk] = 1
-            joypos[pos_turn] = 1
-            joypos[pos_leftright] = 1
-        if event.key == pygame.K_w:
-            joybut[but_move] = 1
-            joybut[but_walk] = 1
-            joypos[pos_turn] = 1
-            joypos[pos_leftright] = 1
-
-    elif event.type == pygame.KEYUP:
-        for i in range(0, 6):
-            joypos[i] = 0
-        for i in range(0, 15):
-            joybut[i] = 0
-
-    if (joystart_leftpaw == True) & (joypos[pos_leftpaw] == 0):
-        joypos[pos_leftpaw] = -1
-    else:
-        joystart_leftpaw = False
-
-    if (joystart_rightpaw == True) & (joypos[pos_rightpaw] == 0):
-        joypos[pos_rightpaw] = -1
-    else:
-        joystart_rightpaw = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    joybut[but_walk_crawl] = 1
+                    joypos[pos_leftright] = -1
+                if event.key == pygame.K_RIGHT:
+                    joybut[but_walk_crawl] = 1
+                    joypos[pos_leftright] = 1
+                if event.key == pygame.K_UP:
+                    joybut[but_walk_crawl] = 1
+                    joypos[pos_frontrear] = -1
+                if event.key == pygame.K_DOWN:
+                    joybut[but_walk_crawl] = 1
+                    joypos[pos_frontrear] = 1
+            elif event.type == pygame.KEYUP:
+                for i in range(0, 6):
+                    joypos[i] = 0
+                for i in range(0, 15):
+                    joybut[i] = 0
 
     """Animation"""
-
-    if (joybut[but_walk] == 0) & (joybut[but_sit] == 0) & (joybut[but_pee] == 0) & (joybut[but_lie] == 0) & (joybut[but_twist] == 0) & (joybut[but_move] == 0) & (joybut[but_anim] == 0) & (lock == True):
-        lock = False
+    if (joybut[but_walk_crawl] == 0) & (joybut[but_sit] == 0) & (joybut[but_pee] == 0) & (joybut[but_lie] == 0) & (joybut[but_twist] == 0) & (joybut[but_move] == 0) & (joybut[but_anim] == 0) & (lock == True):
+        lock                    = False
+        joybut[but_walk_crawl]  = 1
 
     # WALKING
-    if (joybut[but_walk] == 1) & (walking == True) & (stop == False) & (lock == False):  # Quit walk mode
+    if (joybut[but_walk_crawl] == 1) & (walking == True) & (stop == False) & (lock == False):  # Quit walk mode
         stop = True
         lock = True
         if (abs(t-int(t)) <= tstep):
@@ -488,7 +518,7 @@ while (continuer):
         if (t == 0):
             tstop = 1
 
-    if (joybut[but_walk] == 1) & (walking == False) & (Free == True):  # Enter in walk mode
+    if (joybut[but_walk_crawl] == 1) & (walking == False) & (Free == True):  # Enter in walk mode
         walking = True
         stop = False
         Free = False
@@ -725,12 +755,8 @@ while (continuer):
         alpha_pawing = 0/180*pi
         L_paw = 220
 
-        x_end_sitting = Spot.xlr-Spot.L2 + Spot.L1 * \
-            cos(pi/3) + Spot.Lb/2*cos(-alpha_sitting) - \
-            Spot.d*sin(-alpha_sitting)
-        z_end_sitting = Spot.L1 * \
-            sin(pi/3) + Spot.Lb/2*sin(-alpha_sitting) + \
-            Spot.d*cos(-alpha_sitting)
+        x_end_sitting = Spot.xlr-Spot.L2 + Spot.L1 * cos(pi/3) + Spot.Lb/2*cos(-alpha_sitting) - Spot.d*sin(-alpha_sitting)
+        z_end_sitting = Spot.L1 * sin(pi/3) + Spot.Lb/2*sin(-alpha_sitting) + Spot.d*cos(-alpha_sitting)
         # x,y,z rotations then translations
         start_frame_pos = [0, 0, 0, x_offset, 0, b_height]
 
@@ -745,17 +771,11 @@ while (continuer):
             # paw position is define by joystick 2
             if (pawing == True):
                 #print (pos_sit_init[3],pos_sit_init[5])
-                pos[3] = pos_sit_init[3] + \
-                    (L_paw*cos(alpha_pawing)-pos_sit_init[3])*(joypar+1)/2
-                pos[5] = pos_sit_init[5] + \
-                    (-Spot.d-L_paw*sin(alpha_pawing) -
-                     pos_sit_init[5])*(joypar+1)/2
+                pos[3] = pos_sit_init[3] + (L_paw*cos(alpha_pawing) - pos_sit_init[3])*(joypar+1)/2
+                pos[5] = pos_sit_init[5] + (-Spot.d-L_paw*sin(alpha_pawing) - pos_sit_init[5])*(joypar+1)/2
 
-                pos[0] = pos_sit_init[0] + \
-                    (L_paw*cos(alpha_pawing)-pos_sit_init[0])*(joypal+1)/2
-                pos[2] = pos_sit_init[2] + \
-                    (-Spot.d-L_paw*sin(alpha_pawing) -
-                     pos_sit_init[2])*(joypal+1)/2
+                pos[0] = pos_sit_init[0] + (L_paw*cos(alpha_pawing) - pos_sit_init[0])*(joypal+1)/2
+                pos[2] = pos_sit_init[2] + (-Spot.d-L_paw*sin(alpha_pawing) - pos_sit_init[2])*(joypal+1)/2
 
                 thetarf = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[3], pos[4], pos[5], -1)[0]
                 thetalf = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[0], pos[1], pos[2], -1)[0]
@@ -833,8 +853,7 @@ while (continuer):
         # x,y,z rotations then translations
         start_frame_pos = [0, 0, 0, x_offset, 0, b_height]
         # x,y,z rotations then translations
-        end_frame_pos = [0, 0, 0, x_end_shifting +
-                         x_offset, y_end_shifting, b_height]
+        end_frame_pos = [0, 0, 0, x_end_shifting + x_offset, y_end_shifting, b_height]
         pos = Spot.moving(t, start_frame_pos, end_frame_pos, pos)
 
         if (t == 1) & (peeing == False):
@@ -849,8 +868,7 @@ while (continuer):
                 pos[10] = pos_shift_init[10] + (130-pos_shift_init[10])*(joype+1)/2
                 pos[11] = pos_shift_init[11] + (-20-pos_shift_init[11])*(joype+1)/2
 
-                thetalr = Spot.IK(Spot.L0, Spot.L1, Spot.L2,
-                                  Spot.d, pos[9], pos[10], pos[11], 1)[0]
+                thetalr = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[9], pos[10], pos[11], 1)[0]
                 # update of right front leg absolute position
                 leglr = Spot.FK(thetalr, 1)
                 xleglr = Spot.xlr+pos[9]
@@ -975,11 +993,9 @@ while (continuer):
         stance[3] = True
 
     if (anim == True):
-        SpotAnim.animate(pos, t, pi/12, -135/180*pi, Angle, center_x, center_y, thetalf, thetarf, thetarr, thetalr, walking_speed, walking_direction, steering, stance)
-        # SpotAnim.animate(pos,t,pi/2,-0/180*pi,Angle,center_x,center_y,thetalf,thetarf,thetarr,thetalr,walking_speed,walking_direction,steering,stance)
-        # SpotAnim.animate(pos,t,0,-0/180*pi,Angle,center_x,center_y,thetalf,thetarf,thetarr,thetalr,walking_speed,walking_direction,steering,stance)
-
-    mouse = pygame.mouse.get_pos()
+        #SpotAnim.animate(pos, t, pi/12, -135/180*pi, Angle, center_x, center_y, thetalf, thetarf, thetarr, thetalr, walking_speed, walking_direction, steering, stance)
+        #SpotAnim.animate(pos,t,pi/2,-0/180*pi,Angle,center_x,center_y,thetalf,thetarf,thetarr,thetalr,walking_speed,walking_direction,steering,stance)
+        SpotAnim.animate(pos,t,0,-0/180*pi,Angle,center_x,center_y,thetalf,thetarf,thetarr,thetalr,walking_speed,walking_direction,steering,stance)
 
     if (joybut[but_anim] == 1) & (lock == False):
         anim = not(anim)
@@ -989,60 +1005,27 @@ while (continuer):
         SERVO_Move = not(SERVO_Move)
         lock = True
 
-    if ((mouse[0] >= 510) & (mouse[0] <= 590) & (mouse[1] >= 500) & (mouse[1] <= 540)):
-        pygame.draw.rect(screen, SpotAnim.BLACK, [510, 500, 80, 40], 5)
-        if (mouseclick == True) & (lockmouse == False):
-            lockmouse = True
-            anim = not(anim)
-    else:
-        pygame.draw.rect(screen, SpotAnim.WHITE, [510, 500, 80, 40], 5)
-
-    if ((mouse[0] >= 510) & (mouse[0] <= 590) & (mouse[1] >= 550) & (mouse[1] <= 590)):
-        pygame.draw.rect(screen, SpotAnim.BLACK, [510, 550, 80, 40], 5)
-        if (mouseclick == True) & (lockmouse == False) & (Free == True):
-            lockmouse = True
-            SERVO_Move = not(SERVO_Move)
-    else:
-        pygame.draw.rect(screen, SpotAnim.WHITE, [510, 550, 80, 40], 5)
-
-    if (mouseclick == False) & (lockmouse == True):
-        lockmouse = False
-
     if (anim == True):
-        pygame.draw.rect(screen, SpotAnim.GREEN, [510, 500, 80, 40])
-        screen.blit(text_animon, (520, 510))
-    else:
-        pygame.draw.rect(screen, SpotAnim.RED, [510, 500, 80, 40])
-        screen.blit(text_animoff, (520, 510))
+        pygame.display.flip()
 
-    if (SERVO_Move == True):
-        pygame.draw.rect(screen, SpotAnim.GREEN, [510, 550, 80, 40])
-        screen.blit(text_moveon, (520, 560))
-    else:
-        pygame.draw.rect(screen, SpotAnim.RED, [510, 550, 80, 40])
-        screen.blit(text_moveoff, (520, 560))
-
-    pygame.display.flip()
     if (Free == True):
         sleep(0.1)
 
-    servo_moving(pos, SERVO_Move)
-
     """ CG update """
-    CG = SpotCG.CG_calculation(thetalf, thetarf, thetarr, thetalr)
+    CG      = SpotCG.CG_calculation(thetalf, thetarf, thetarr, thetalr)
     # Calculation of CG absolute position
-    M = Spot.xyz_rotation_matrix( theta_spot[0], theta_spot[1], theta_spot[2], False)
-    CGabs = Spot.new_coordinates( M, CG[0], CG[1], CG[2], x_spot[1], y_spot[1], z_spot[1])
+    M       = Spot.xyz_rotation_matrix( theta_spot[0], theta_spot[1], theta_spot[2], False)
+    CGabs   = Spot.new_coordinates( M, CG[0], CG[1], CG[2], x_spot[1], y_spot[1], z_spot[1])
 
     """ Data Logging """
-    ta = time()
-    dtt = ta-tt
-    tt = ta
-    sCGo = sCG
-    sCG = [(CG[0]-pos[13][6])/dtt, (CG[1]-pos[14][6])/dtt]  # in mm/s
-    aCG = [(sCG[0]-sCGo[0])/dtt, (sCG[1]-sCGo[1])/dtt]  # in mm/s²
-    ZMP = [CG[0]-CGabs[2]/9810*aCG[0], CG[1]-CGabs[2]/9810*aCG[1]]  # in mm
-    dCG = SpotCG.CG_distance(x_spot[2:6], y_spot[2:6], z_spot[2:6], CGabs[0], CGabs[1], stance)
+    ta      = time()
+    dtt     = ta-tt
+    tt      = ta
+    sCGo    = sCG
+    sCG     = [(CG[0]-pos[13][6])/dtt, (CG[1]-pos[14][6])/dtt]  # in mm/s
+    aCG     = [(sCG[0]-sCGo[0])/dtt, (sCG[1]-sCGo[1])/dtt]  # in mm/s²
+    ZMP     = [CG[0]-CGabs[2]/9810*aCG[0], CG[1]-CGabs[2]/9810*aCG[1]]  # in mm
+    dCG     = SpotCG.CG_distance(x_spot[2:6], y_spot[2:6], z_spot[2:6], CGabs[0], CGabs[1], stance)
 
     if (sum(stance) > 2):
         xZMP.append(0)
@@ -1089,7 +1072,9 @@ while (continuer):
 
     distance.append(dCG[0])
     timing.append(t)
-    Bat = Bat+1
+
+    servo_moving(pos, SERVO_Move)
+    #Bat = Bat+1
     # if (Bat == 30): #update Battery voltage
     #    chan = AnalogIn(ads, ADS.P0)
     #    chans='Bat: '+('%.2f' % (chan.voltage*2.0035))+' V'
@@ -1097,5 +1082,6 @@ while (continuer):
 
 setText('')
 setRGB(0, 0, 0)
+
 pygame.quit()
 plt.plot(timing, distance)
