@@ -17,13 +17,12 @@ import matplotlib.pyplot as plt
 import Spotmicro_Animate_lib_009
 import Spotmicro_Gravity_Center_lib_007
 import Spotmicro_lib_020
-import adafruit_pca9685
-import adafruit_mpu6050
+#import adafruit_pca9685
+#import adafruit_mpu6050
 from time import sleep, time
 from math import pi, sin, cos, atan, atan2, sqrt
 import numpy as np
 import pygame
-import ev3dev.auto as ev3
 
 #import os
 #os.environ["SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
@@ -194,9 +193,9 @@ SpotCG          = Spotmicro_Gravity_Center_lib_007.SpotCG()
 """ Joystick Init """
 #pygame.event.set_grab(True)
 #pygame.joystick.init()
-#joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
-#for joy in joysticks:
-#    print(joy.get_name(), joy.get_id(), joy.get_guid(), joy.get_instance_id())
+joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
+for joy in joysticks:
+    print(joy.get_name(), joy.get_id(), joy.get_guid(), joy.get_instance_id())
 #print(joysticks)
 #joystick = pygame.joystick.Joystick(0)
 #joystick.init()
@@ -433,6 +432,18 @@ pos     = [-x_offset, track, -b_height, -x_offset, -track, -b_height, -x_offset,
 #chans='Bat: '+('%.2f' % (chan.voltage*2.0035))+' V'
 chans = 'Bat: '+('%.2f' % (5*2.0035))+' V'
 
+
+class Controller:
+    """ Class to interface with a Joystick """
+    def __init__( self, joy_index=0 ):
+        pygame.joystick.init()
+        self.joystick = pygame.joystick.Joystick( joy_index )
+        self.joystick.init()
+
+    def getAxisValue( self, axis ):
+        value = self.joystick.get_axis( axis )
+        return value
+
 """
 Main Loop
 """
@@ -442,11 +453,14 @@ setText(disptext+chans)
 tt                  = time()  # initialize time for speed and acceleration calculation
 joystart_rightpaw   = True
 joystart_leftpaw    = True
-stop_delay          = 0
+clock_tick          = 100
+numaxes             = joystick.get_numaxes()
+numbuttons          = joystick.get_numbuttons()
+hats                = joystick.get_numhats()
 
 while (continuer):
 
-    clock.tick(300)
+    clock.tick(clock_tick)
     angle               = comp_filter(angle, tstep, Tcomp)
     anglex_buff[iangle] = angle[0]+zeroangle_x
     angley_buff[iangle] = angle[1]+zeroangle_y
@@ -457,22 +471,86 @@ while (continuer):
         iangle = 0
 
     if (joystick1 > 0):
-        for i in range (0,6): #read analog joystick position
-            joypos[i] = joystick.get_axis(i)  
-            
-            if (joystart_leftpaw==True)&(joypos[pos_leftpaw]==0):
-                joypos[pos_leftpaw]= -1
-            else:
-                joystart_leftpaw = False
-                
-            if (joystart_rightpaw==True)&(joypos[pos_rightpaw]==0):
-                joypos[pos_rightpaw]= -1  
-            else:
-                joystart_rightpaw = False
-                
-            for i in range (0,15):  #read buttons
-                joybut[i] = joystick.get_button(i)
-            joyhat = joystick.get_hat(0)  #read hat  
+        for event in pygame.event.get():  # User did something.
+            if event.type == pygame.QUIT:
+                continuer = False
+
+            # Possible joystick actions: JOYAXISMOTION JOYBALLMOTION JOYBUTTONDOWN
+            # JOYBUTTONUP JOYHATMOTION
+            if event.type == pygame.JOYBUTTONDOWN:
+                print("Joystick button pressed.", event)
+                if (event.joy == 1 and event.button == 11): # START
+                    print('event.button START')
+                if (event.joy == 1 and event.button == 5): # LIST
+                    print('event.button list')
+                if (event.joy == 1 and event.button == 9): # return
+                    print('event.button RETURN')
+                if (event.joy == 1 and event.button == 8): # home
+                    print('event.button HOME')
+
+                if (event.joy == 3 and event.button == 10): # SELECT
+                    print('event.button SELECT')
+                if (event.joy == 3 and event.button == 11): # START
+                    print('event.button START')
+
+                if (event.joy == 3 and event.button == 0): # A
+                    print('event.button A')
+                if (event.joy == 3 and event.button == 1): # B
+                    print('event.button B')
+                if (event.joy == 3 and event.button == 3): # X
+                    print('event.button X')
+                if (event.joy == 3 and event.button == 4): # Y
+                    print('event.button Y')
+
+                if (event.joy == 3 and event.button == 6): # L1
+                    #print('event.button L1')
+                    clock_tick  = clock_tick + 50
+                if (event.joy == 3 and event.button == 8): # L2
+                    #print('event.button L2')
+                    clock_tick  = clock_tick - 50
+                if (event.joy == 3 and event.button == 7): # R1
+                    print('event.button R1')
+                if (event.joy == 3 and event.button == 9): # R2
+                    print('event.button R2')
+
+                #joybut[event.button]    = 1
+            elif event.type == pygame.JOYBUTTONUP:
+                for i in range(0, numaxes):
+                    joypos[i] = 0
+                for i in range(0, numbuttons):
+                    joybut[i] = 0
+
+            elif event.type == pygame.JOYHATMOTION:
+                print('JOYHATMOTION', event)
+            elif event.type == pygame.JOYAXISMOTION:
+                # LEFT  : 0, 1, 2
+                # RIGHT : 3, 4, 5
+                print(event)
+                if (event.axis == 0 and event.value > 0):
+                    joypos[pos_leftright] = -1
+                elif (event.axis == 0 and event.value < 0):
+                    joypos[pos_leftright] = 1
+                elif (event.axis == 1 or event.axis == 2):
+                    joybut[but_walk_crawl] = 1
+                    joypos[pos_frontrear]  = event.value
+                else:
+                    for i in range(0, numaxes):
+                        joypos[i] = 0
+                    for i in range(0, numbuttons):
+                        joybut[i] = 0
+                # input = self.get_axis(event.joy, event.axis, event.value)
+            #if event.type == pygame.JOYBUTTONUP:
+            #   print("Joystick button released.")
+        #for i in range (0,numaxes): #read analog joystick position
+        #    joypos[i] = joystick.get_axis(i)  
+        #for i in range (0,numbuttons):  #read buttons
+        #    #joybut[i] = joystick.get_button(i)
+        #for i in range(numbuttons):
+        #    button = joystick.get_button(i)
+        #    #print("Button {:>2} value: {}".format(i, button))
+        #joyhat = joystick.get_hat(0)  #read hat  
+
+        #print(joypos)
     else:
         for event in pygame.event.get():  # User did something.
             if event.type == pygame.QUIT:  # If user clicked close.
@@ -499,7 +577,7 @@ while (continuer):
     """Animation"""
     if (joybut[but_walk_crawl] == 0) & (joybut[but_sit] == 0) & (joybut[but_pee] == 0) & (joybut[but_lie] == 0) & (joybut[but_twist] == 0) & (joybut[but_move] == 0) & (joybut[but_anim] == 0) & (lock == True):
         lock                    = False
-        joybut[but_walk_crawl]  = 1
+        #joybut[but_walk_crawl]  = 1
 
     # WALKING
     if (joybut[but_walk_crawl] == 1) & (walking == True) & (stop == False) & (lock == False):  # Quit walk mode
@@ -988,9 +1066,9 @@ while (continuer):
         stance[3] = True
 
     if (anim == True):
-        #SpotAnim.animate(pos, t, pi/12, -135/180*pi, Angle, center_x, center_y, thetalf, thetarf, thetarr, thetalr, walking_speed, walking_direction, steering, stance)
+        SpotAnim.animate(pos, t, pi/12, -135/180*pi, Angle, center_x, center_y, thetalf, thetarf, thetarr, thetalr, walking_speed, walking_direction, steering, stance)
         #SpotAnim.animate(pos,t,pi/2,-0/180*pi,Angle,center_x,center_y,thetalf,thetarf,thetarr,thetalr,walking_speed,walking_direction,steering,stance)
-        SpotAnim.animate(pos,t,0,-0/180*pi,Angle,center_x,center_y,thetalf,thetarf,thetarr,thetalr,walking_speed,walking_direction,steering,stance)
+        #SpotAnim.animate(pos,t,0,-0/180*pi,Angle,center_x,center_y,thetalf,thetarf,thetarr,thetalr,walking_speed,walking_direction,steering,stance)
 
     if (joybut[but_anim] == 1) & (lock == False):
         anim = not(anim)
