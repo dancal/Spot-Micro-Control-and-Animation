@@ -14,23 +14,23 @@ type %matplotlib qt  on console to enable animation
 #from adafruit_ads1x15.analog_in import AnalogIn
 
 import matplotlib.pyplot as plt
-import Spotmicro_Animate_lib_009
-import Spotmicro_Gravity_Center_lib_007
-import Spotmicro_lib_020
+from spotmicroai.controller import Spotmicro_Animate_lib_009
+from spotmicroai.controller import Spotmicro_Gravity_Center_lib_007
+from spotmicroai.controller import Spotmicro_lib_020
+from spotmicroai.controller.Spotmicro_Lcd_lib import LCDScreenController
+from spotmicroai.utilities.log import Logger
+
 #import adafruit_pca9685
 #import adafruit_mpu6050
+import array
 from time import sleep, time
 from math import pi, sin, cos, atan, atan2, sqrt
 import numpy as np
 import pygame
 
-#import os
-#os.environ["SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
-#os.environ["SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "True"
-
-
 def setRGB(r, g, b):
-    print('RGB', r, g, b)
+    logController.info("RGB : %s" % (','.join([str(r),str(g),str(b)])))
+
     ##i2c.writeto (DISPLAY_RGB_ADDR,bytes([0x00,0x00]),stop=False)
     ##i2c.writeto (DISPLAY_RGB_ADDR,bytes([0x01,0x00]),stop=False)
     ##i2c.writeto (DISPLAY_RGB_ADDR,bytes([0x08,0xaa]),stop=False)
@@ -38,38 +38,10 @@ def setRGB(r, g, b):
     ##i2c.writeto (DISPLAY_RGB_ADDR,bytes([3,g]),stop=False)
     ##i2c.writeto (DISPLAY_RGB_ADDR,bytes([2,b]),stop=False)
 
-
-def textCommand(cmd):
-    msg = [0x80]+cmd
-    ##print('textCommand = ', msg)
-    ##i2c.writeto (DISPLAY_TEXT_ADDR,bytes(msg), stop = False)
-
-
-def setText(text):
-    textCommand([0x01])  # clear display
-    sleep(.05)
-    textCommand([0x08 | 0x04 | 0x00 | 0x00])  # display on, no cursor
-    # 0x02 cursor
-    # 0x01 Cursor Blinking
-    textCommand([0x28])  # 2 lines
-    sleep(.05)
-    count = 0
-    row = 0
-    for c in text:
-        if c == '\n' or count == 16:
-            count = 0
-            row += 1
-            if row == 2:
-                break
-            textCommand([0xc0])  # switch to second line (address 0x40 to 0x67)
-            # 01xxxxxxx
-            # First line addresses are 0x00 to 0x27)
-        if c == '\n':
-            continue
-        count += 1
-        msg = [0x40]+[ord(c)]
-        ##i2c.writeto (DISPLAY_TEXT_ADDR,bytes(msg), stop = False)
-        ## print('setText = ', msg)
+def setLcdScreen(lcdController, status):
+    lcdController.status    = status
+    lcdController.update_lcd_creen()
+    logController.info("%s" % status)
 
 """ Angle measurement Complementary filter """
 def comp_filter(angle, t, T):
@@ -178,34 +150,47 @@ def servo_moving(pos, move):
         print(orgthetalf, orgthetarf, orgthetarr, orgthetalr)
 
 
-
-anim            = True         # animation display
+pygame.init()
+anim            = True      # animation display
 SERVO_Move      = False     # servo move activation
 IMU_Comp        = False
 
-pygame.init()
-if anim == True:
-    SpotAnim    = Spotmicro_Animate_lib_009.SpotAnim()
+logController   = Logger().setup_logger()
+logController.info("SpotMicro starting...")
 
-Spot            = Spotmicro_lib_020.Spot()
-SpotCG          = Spotmicro_Gravity_Center_lib_007.SpotCG()
 
 """ Joystick Init """
 #pygame.event.set_grab(True)
 #pygame.joystick.init()
-joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
-for joy in joysticks:
-    print(joy.get_name(), joy.get_id(), joy.get_guid(), joy.get_instance_id())
-#print(joysticks)
-#joystick = pygame.joystick.Joystick(0)
-#joystick.init()
-joystick1       = pygame.joystick.get_count()
+#joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
+#for joy in joysticks:
+#    print(joy.get_name(), joy.get_id(), joy.get_guid(), joy.get_instance_id())
+numaxes             = 0
+numbuttons          = 0
+hats                = 0
+
+joystick1           = pygame.joystick.get_count()
 if joystick1 == 0:
     # No joysticks!
     print("Sorry, Game have found that no joystick is attached.")
 else:
-    joystick = pygame.joystick.Joystick(0)
+    joystick        = pygame.joystick.Joystick(0)
     joystick.init()
+    numaxes         = joystick.get_numaxes()
+    numbuttons      = joystick.get_numbuttons()
+    hats            = joystick.get_numhats()
+
+""" Display Management """
+#DISPLAY_TEXT_ADDR   = 0x3e
+LCD_I2C_ADDR    = 0
+DISPLAY_RGB_ADDR    = 0x60
+
+lcdController   = LCDScreenController(LCD_I2C_ADDR, logController, joystick1)
+Spot            = Spotmicro_lib_020.Spot()
+SpotCG          = Spotmicro_Gravity_Center_lib_007.SpotCG(Spot)
+
+if anim == True:
+    SpotAnim    = Spotmicro_Animate_lib_009.SpotAnim(Spot)
 
 """ Walking parameters """
 b_height        = 200
@@ -222,24 +207,24 @@ ra_lat          = 40    # 20
 
 bend_angle      = 0
 
-steering            = 200  # Initial steering radius (arbitrary)
-walking_direction   = 90/180*pi  # Initial steering angle (arbitrary)
-center_x            = steering*cos(walking_direction)
-center_y            = steering*sin(walking_direction)
+steering        = 200  # Initial steering radius (arbitrary)
+walk_direction  = 90/180*pi  # Initial steering angle (arbitrary)
+center_x        = steering*cos(walk_direction)
+center_y        = steering*sin(walk_direction)
 
-stepl2              = 0.16
-stepl4              = 0.125
-tstep2              = stepl2/8  # Timing/clock step 0.00666666666666
-tstep4              = 0.006666666666
+stepl2          = 0.16
+stepl4          = 0.125
+tstep2          = stepl2/8  # Timing/clock step 0.00666666666666
+tstep4          = 0.006666666666
 
-height              = b_height
+height          = b_height
 
 """Initialization to 4 steps walk """
-stepl               = stepl4
-h_amp               = h_amp4
-v_amp               = v_amp4
-track               = track4
-tstep               = tstep4
+stepl           = stepl4
+h_amp           = h_amp4
+v_amp           = v_amp4
+track           = track4
+tstep           = tstep4
 
 """ Joystick settings """
 but_walk_trot   = 8
@@ -286,70 +271,70 @@ ZMP             = [0, 0]
 
 
 """ States initialization"""
-Free        = True         # Spot is ready to receive new command
-sitting     = False
-walking     = False     # walking sequence activation
-lying       = False
-twisting    = False
-pawing      = False
-shifting    = False
-peeing      = False
-trot        = False
+Free            = True         # Spot is ready to receive new command
+sitting         = False
+walking         = False     # walking sequence activation
+lying           = False
+twisting        = False
+pawing          = False
+shifting        = False
+peeing          = False
+trot            = False
 
-stop        = False    # walking stop sequence activation
-lock        = False    # locking start key temporarily in order to avoid start and stop if start key is pressed too long
+stop            = False    # walking stop sequence activation
+lock            = False    # locking start key temporarily in order to avoid start and stop if start key is pressed too long
 
 #lockmouse   = False
 #mouseclick  = False
 
-stance              = [True, True, True, True]
-cw                  = 1
-walking_speed       = 0
-walking_direction   = 0
-steeering           = 1e6
+stance          = [True, True, True, True]
+cw              = 1
+walking_speed   = 0
+walk_direction  = 0
+steeering       = 1e6
 
 """ Complementary filter (IMU) initialization """
-module              = 0
-iangle              = 0
-anglex_buff         = np.zeros(10)
-angley_buff         = np.zeros(10)
-zeroangle_x         = 0.0338
-zeroangle_y         = -0.0594
-angle_count         = 1  # number of samples to calculate average angles
-Tcomp               = 0.02
-angle               = np.zeros(2)
-Angle               = np.zeros(2)
-Angle_old           = np.zeros(2)
+module          = 0
+iangle          = 0
+anglex_buff     = np.zeros(10)
+angley_buff     = np.zeros(10)
+zeroangle_x     = 0.0338
+zeroangle_y     = -0.0594
+angle_count     = 1  # number of samples to calculate average angles
+Tcomp           = 0.02
+angle           = np.zeros(2)
+Angle           = np.zeros(2)
+Angle_old       = np.zeros(2)
 
 """ Counter for Battery check initialization """
-Bat                 = 0  # counter for battery check
+Bat             = 0  # counter for battery check
 
 """Horizontal Compensation PID Gains """
-Kp = 4
-Ki = 22  # was up to 22
-Kd = 0  # was up to 0.08
+Kp              = 4
+Ki              = 22  # was up to 22
+Kd              = 0  # was up to 0.08
 
 """Servo trimming """
-xtlf = 14
-ytlf = 0
-ztlf = 0
+xtlf            = 14
+ytlf            = 0
+ztlf            = 0
 
-xtrf = 14
-ytrf = 0
-ztrf = 3
+xtrf            = 14
+ytrf            = 0
+ztrf            = 3
 
-xtrr = 14
-ytrr = 0
-ztrr = 0
+xtrr            = 14
+ytrr            = 0
+ztrr            = 0
 
-xtlr = 14
-ytlr = 0
-ztlr = 0
+xtlr            = 14
+ytlr            = 0
+ztlr            = 0
 
-orgthetalf         = [0,0,0]
-orgthetarf         = [0,0,0]
-orgthetarr         = [0,0,0]
-orgthetalr         = [0,0,0]
+orgthetalf      = [0,0,0]
+orgthetarf      = [0,0,0]
+orgthetarr      = [0,0,0]
+orgthetalr      = [0,0,0]
 
 """ Main loop intialization """
 continuer       = True
@@ -359,11 +344,6 @@ tstart          = 1  # End of start sequence
 tstop           = 1000  # Start of stop sequence by default
 trans           = 0
 transtep        = 0.025
-
-""" Display Management """
-DISPLAY_TEXT_ADDR = 0x3e
-DISPLAY_RGB_ADDR = 0x60
-
 
 
 """ i2C Initialization"""
@@ -384,11 +364,7 @@ DISPLAY_RGB_ADDR = 0x60
 ##    kitB.servo[Spot.servo_table[i]].set_pulse_width_range(500, 2500)
 
 """ """
-
-
 """ Main Program """
-
-
 """ """
 
 
@@ -397,67 +373,47 @@ setRGB(127, 127, 255)
 
 
 """ Initialize legs and body positions """
-x_spot = [0, x_offset, Spot.xlf, Spot.xrf, Spot.xrr, Spot.xlr, 0, 0, 0, 0]
-y_spot = [0, 0, Spot.ylf+track, Spot.yrf-track, Spot.yrr-track, Spot.ylr+track, 0, 0, 0, 0]
-z_spot = [0, b_height, 0, 0, 0, 0, 0, 0, 0, 0]
-theta_spot = [0, 0, 0, 0, 0, 0]
+x_spot      = [0, x_offset, Spot.xlf, Spot.xrf, Spot.xrr, Spot.xlr, 0, 0, 0, 0]
+y_spot      = [0, 0, Spot.ylf+track, Spot.yrf-track, Spot.yrr-track, Spot.ylr+track, 0, 0, 0, 0]
+z_spot      = [0, b_height, 0, 0, 0, 0, 0, 0, 0, 0]
+theta_spot  = [0, 0, 0, 0, 0, 0]
 
 
 """theta_spot = [x angle ground, y angle ground, z angle body in space, x angle body, y angle body, z angle body] """
 # theta xyz of ground then theta xyz of frame/body
-pos_init = [-x_offset, track, -b_height, -x_offset, -track, -b_height, -x_offset, -track, -b_height, -x_offset, track, -b_height]
+pos_init    = [-x_offset, track, -b_height, -x_offset, -track, -b_height, -x_offset, -track, -b_height, -x_offset, track, -b_height]
 
-thetalf = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos_init[0], pos_init[1], pos_init[2], 1)[0]
-thetarf = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos_init[3], pos_init[4], pos_init[5], -1)[0]
-thetarr = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos_init[6], pos_init[7], pos_init[8], -1)[0]
-thetalr = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos_init[9], pos_init[10], pos_init[11], 1)[0]
+thetalf     = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos_init[0], pos_init[1], pos_init[2], 1)[0]
+thetarf     = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos_init[3], pos_init[4], pos_init[5], -1)[0]
+thetarr     = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos_init[6], pos_init[7], pos_init[8], -1)[0]
+thetalr     = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos_init[9], pos_init[10], pos_init[11], 1)[0]
 
-CG      = SpotCG.CG_calculation(thetalf, thetarf, thetarr, thetalr)
-ZMP     = [CG[0], CG[1]]  # ZMP is initialized to CG position
+CG          = SpotCG.CG_calculation(thetalf, thetarf, thetarr, thetalr)
+ZMP         = [CG[0], CG[1]]  # ZMP is initialized to CG position
 
 # Calculation of CG absolute position
-M       = Spot.xyz_rotation_matrix( theta_spot[0], theta_spot[1], theta_spot[2], False)
-CGabs   = Spot.new_coordinates( M, CG[0], CG[1], CG[2], x_spot[1], y_spot[1], z_spot[1])
-dCG     = SpotCG.CG_distance( x_spot[2:6], y_spot[2:6], z_spot[2:6], CGabs[0], CGabs[1], stance)
+M           = Spot.xyz_rotation_matrix( theta_spot[0], theta_spot[1], theta_spot[2], False)
+CGabs       = Spot.new_coordinates( M, CG[0], CG[1], CG[2], x_spot[1], y_spot[1], z_spot[1])
+dCG         = SpotCG.CG_distance( x_spot[2:6], y_spot[2:6], z_spot[2:6], CGabs[0], CGabs[1], stance)
 
-x_spot  = [0, x_offset, Spot.xlf, Spot.xrf, Spot.xrr, Spot.xlr, CG[0], CGabs[0], dCG[1], ZMP[0]]
-y_spot  = [0, 0, Spot.ylf+track, Spot.yrf-track, Spot.yrr - track, Spot.ylr+track, CG[1], CGabs[1], dCG[2], ZMP[1]]
-z_spot  = [0, b_height, 0, 0, 0, 0, CG[2], CGabs[2], dCG[3], CGabs[2]]
+x_spot      = [0, x_offset, Spot.xlf, Spot.xrf, Spot.xrr, Spot.xlr, CG[0], CGabs[0], dCG[1], ZMP[0]]
+y_spot      = [0, 0, Spot.ylf+track, Spot.yrf-track, Spot.yrr - track, Spot.ylr+track, CG[1], CGabs[1], dCG[2], ZMP[1]]
+z_spot      = [0, b_height, 0, 0, 0, 0, CG[2], CGabs[2], dCG[3], CGabs[2]]
 
-pos     = [-x_offset, track, -b_height, -x_offset, -track, -b_height, -x_offset, -track, -b_height, -x_offset, track, -b_height, theta_spot, x_spot, y_spot, z_spot]
-
-# Read Battery Voltage
-
-#chan = AnalogIn(ads, ADS.P0)
-#chans='Bat: '+('%.2f' % (chan.voltage*2.0035))+' V'
-chans = 'Bat: '+('%.2f' % (5*2.0035))+' V'
-
-
-class Controller:
-    """ Class to interface with a Joystick """
-    def __init__( self, joy_index=0 ):
-        pygame.joystick.init()
-        self.joystick = pygame.joystick.Joystick( joy_index )
-        self.joystick.init()
-
-    def getAxisValue( self, axis ):
-        value = self.joystick.get_axis( axis )
-        return value
+pos         = [-x_offset, track, -b_height, -x_offset, -track, -b_height, -x_offset, -track, -b_height, -x_offset, track, -b_height, theta_spot, x_spot, y_spot, z_spot]
 
 """
 Main Loop
 """
-disptext = 'Ready !         '
-setText(disptext+chans)
-
 tt                  = time()  # initialize time for speed and acceleration calculation
 joystart_rightpaw   = True
 joystart_leftpaw    = True
 clock_tick          = 100
 attention_ready     = True
-numaxes             = joystick.get_numaxes()
-numbuttons          = joystick.get_numbuttons()
-hats                = joystick.get_numhats()
+board_temperature   = 0
+
+setLcdScreen(lcdController, 'Ready')
+logController.info('SpotMicro Loop...')
 
 while (continuer):
 
@@ -631,9 +587,7 @@ while (continuer):
         lock    = True
         trec    = int(t)
         setRGB(146, 208, 80)
-        disptext = 'Walking...      '
-        setText(disptext+chans)
-        attention_ready = False
+        setLcdScreen(lcdController, 'Walking')
 
      # SITTING and GIVING PAW
     if (joybut[but_sit] == 1) & (sitting == False) & (Free == True):  # Enter in sitting mode
@@ -643,8 +597,7 @@ while (continuer):
         t       = 0
         lock    = True
         setRGB(255, 153, 51)
-        disptext = 'Sitting...      '
-        setText(disptext+chans)
+        setLcdScreen(lcdController, 'Sitting')
 
     if (joybut[but_sit] == 1) & (sitting == True) & (stop == False) & (lock == False):  # Quit sitting mode
         stop        = True
@@ -658,8 +611,7 @@ while (continuer):
         t           = 0
         lock        = True
         setRGB(255, 255, 255)
-        disptext = 'Peeing...       '
-        setText(disptext+chans)
+        setLcdScreen(lcdController, 'Peeing')
 
     if (joybut[but_pee] == 1) & (shifting == True) & (stop == False) & (lock == False):  # Quit sitting mode
         stop = True
@@ -673,8 +625,7 @@ while (continuer):
         t = 0
         lock = True
         setRGB(204, 102, 255)
-        disptext = 'Lying...        '
-        setText(disptext+chans)
+        setLcdScreen(lcdController, 'Lying')
 
     if (joybut[but_lie] == 1) & (lying == True) & (stop == False) & (lock == False):  # Quit sitting mode
         stop = True
@@ -687,8 +638,7 @@ while (continuer):
         t = 0
         lock = True
         setRGB(255, 0, 0)
-        disptext = 'Twisting...     '
-        setText(disptext+chans)
+        setLcdScreen(lcdController, 'Twisting')
 
     if (walking == True):
         coef = 1.2
@@ -699,18 +649,18 @@ while (continuer):
             trec = int(t)+1
 
             module_old = module
-            walking_direction_old = walking_direction
+            walk_direction_old = walk_direction
             steering_old = steering
 
-            x_old = module_old*cos(walking_direction_old)
-            y_old = module_old*sin(walking_direction_old)
+            x_old = module_old*cos(walk_direction_old)
+            y_old = module_old*sin(walk_direction_old)
 
             # update request
             module = sqrt(joypos[pos_leftright]**2 + joypos[pos_frontrear]**2)
-            walking_direction = (atan2(-joypos[pos_leftright], -joypos[pos_frontrear]) % (2*pi)+pi/2) % (2*pi)
+            walk_direction = (atan2(-joypos[pos_leftright], -joypos[pos_frontrear]) % (2*pi)+pi/2) % (2*pi)
 
-            x_new = module*cos(walking_direction)
-            y_new = module*sin(walking_direction)
+            x_new = module*cos(walk_direction)
+            y_new = module*sin(walk_direction)
 
             # steering update
             if (abs(joypos[pos_turn]) < 0.2):
@@ -735,17 +685,17 @@ while (continuer):
                 x_new = x_old + (x_new-x_old)/gap*0.01
                 y_new = y_old + (y_new-y_old)/gap*0.01
                 module = sqrt(x_new**2+y_new**2)
-                walking_direction = atan2(y_new, x_new)
+                walk_direction = atan2(y_new, x_new)
 
             # reduces speed sideways and backwards
             min_h_amp = h_amp*(1/2e6*steering+1/2)
-            xa = 1+cos(walking_direction-pi/2)
+            xa = 1+cos(walk_direction-pi/2)
             walking_speed = min(1, module) * min(h_amp, min_h_amp) * (1/8*xa**2+1/8*xa+1/4)
 
         if ((abs(joypos[pos_leftright]) < 0.2) & (abs(joypos[pos_frontrear]) < 0.2)) & (stop == False):
             t = t+tstep
             module = max(0, module-0.01)
-            walking_speed = module * h_amp * ((1+cos(walking_direction-pi/2))/2*0.75+0.25)
+            walking_speed = module * h_amp * ((1+cos(walk_direction-pi/2))/2*0.75+0.25)
             if (steering < 2000):
                 steering = min(1e6, steering*coef)
             else:
@@ -830,7 +780,7 @@ while (continuer):
             else:
                 """ stop """
                 phase = 5+trans
-        pos = Spot.start_walk_stop(track, x_offset, steering, walking_direction, cw, walking_speed, v_amp, height, stepl, t, tstep, theta_spot, x_spot, y_spot, z_spot, phase)
+        pos = Spot.start_walk_stop(track, x_offset, steering, walk_direction, cw, walking_speed, v_amp, height, stepl, t, tstep, theta_spot, x_spot, y_spot, z_spot, phase)
         theta_spot = pos[12]
         x_spot = pos[13]
         y_spot = pos[14]
@@ -840,9 +790,6 @@ while (continuer):
             stop = False
             walking = False
             Free = True
-            setRGB(127, 127, 255)
-            disptext = 'Waiting...      '
-            setText(disptext+chans)
             stepl = stepl4
             h_amp = h_amp4
             v_amp = v_amp4
@@ -850,8 +797,10 @@ while (continuer):
             tstep = tstep4
             trans = 0
             trot = False
-            print('waiting')
             attention_ready = True
+
+            setRGB(127, 127, 255)
+            setLcdScreen(lcdController, 'Walking Wait')
 
     if (sitting == True):
         alpha_sitting = -30/180*pi
@@ -943,12 +892,11 @@ while (continuer):
             t = t-4*tstep
             if (t <= 0):
                 t = 0
-                stop = False
-                sitting = False
-                Free = True
+                stop        = False
+                sitting     = False
+                Free        = True
                 setRGB(127, 127, 255)
-                disptext = 'Waiting...      '
-                setText(disptext+chans)
+                setLcdScreen(lcdController, 'Sitting Wait')
 
     if (shifting == True):
         x_end_shifting = ra_longi
@@ -1016,8 +964,7 @@ while (continuer):
                 shifting = False
                 Free = True
                 setRGB(127, 127, 255)
-                disptext = 'Waiting...      '
-                setText(disptext+chans)
+                setLcdScreen(lcdController, 'Shifting Wait')
 
     if (lying == True):
         angle_lying = 40/180*pi
@@ -1040,8 +987,7 @@ while (continuer):
                 lying = False
                 Free = True
                 setRGB(127, 127, 255)
-                disptext = 'Waiting...      '
-                setText(disptext+chans)
+                setLcdScreen(lcdController, 'Lying Wait')
 
     if (twisting == True):
         x_angle_twisting = 0/180*pi
@@ -1056,8 +1002,7 @@ while (continuer):
             twisting = False
             Free = True
             setRGB(127, 127, 255)
-            disptext = 'Waiting...      '
-            setText(disptext+chans)
+            setLcdScreen(lcdController, 'Twisting Wait')
 
         if (t < 0.25):
             end_frame_pos = [x_angle_twisting, y_angle_twisting, z_angle_twisting, x_offset, 0, b_height]  # x,y,z rotations then translations
@@ -1072,8 +1017,8 @@ while (continuer):
             end_frame_pos = [-x_angle_twisting, -y_angle_twisting, - z_angle_twisting, x_offset, 0, b_height]
             pos = Spot.moving((t-0.75)*4, end_frame_pos, start_frame_pos, pos)
 
-    xc = steering * cos(walking_direction)
-    yc = steering * sin(walking_direction)
+    xc = steering * cos(walk_direction)
+    yc = steering * sin(walk_direction)
 
     # absolute center x position
     center_x = x_spot[0]+(xc*cos(theta_spot[2])-yc*sin(theta_spot[2]))
@@ -1096,9 +1041,9 @@ while (continuer):
         stance[3] = True
 
     if (anim == True):
-        SpotAnim.animate(pos, t, pi/12, -135/180*pi, Angle, center_x, center_y, thetalf, thetarf, thetarr, thetalr, walking_speed, walking_direction, steering, stance)
-        #SpotAnim.animate(pos,t,pi/2,-0/180*pi,Angle,center_x,center_y,thetalf,thetarf,thetarr,thetalr,walking_speed,walking_direction,steering,stance)
-        #SpotAnim.animate(pos,t,0,-0/180*pi,Angle,center_x,center_y,thetalf,thetarf,thetarr,thetalr,walking_speed,walking_direction,steering,stance)
+        SpotAnim.animate(pos, t, pi/12, -135/180*pi, Angle, center_x, center_y, thetalf, thetarf, thetarr, thetalr, walking_speed, walk_direction, steering, stance)
+        #SpotAnim.animate(pos,t,pi/2,-0/180*pi,Angle,center_x,center_y,thetalf,thetarf,thetarr,thetalr,walking_speed,walk_direction,steering,stance)
+        #SpotAnim.animate(pos,t,0,-0/180*pi,Angle,center_x,center_y,thetalf,thetarf,thetarr,thetalr,walking_speed,walk_direction,steering,stance)
 
     if (joybut[but_anim] == 1) & (lock == False):
         anim = not(anim)
@@ -1177,14 +1122,9 @@ while (continuer):
     timing.append(t)
 
     servo_moving(pos, SERVO_Move)
-    #Bat = Bat+1
-    # if (Bat == 30): #update Battery voltage
-    #    chan = AnalogIn(ads, ADS.P0)
-    #    chans='Bat: '+('%.2f' % (chan.voltage*2.0035))+' V'
-    #    Bat =0
 
-setText('')
 setRGB(0, 0, 0)
+setLcdScreen(lcdController, 'Exit')
 
 pygame.quit()
 plt.plot(timing, distance)

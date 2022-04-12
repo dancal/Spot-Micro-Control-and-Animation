@@ -6,7 +6,6 @@
 from math import pi, sin, cos, asin, acos, atan2, sqrt
 import numpy as np
 
-
 class Spot:
     """ Servos Settings """
     """ rotation direction """
