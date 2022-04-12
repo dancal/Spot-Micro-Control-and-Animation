@@ -17,7 +17,9 @@ import matplotlib.pyplot as plt
 from spotmicroai.controller import Spotmicro_Animate_lib_009
 from spotmicroai.controller import Spotmicro_Gravity_Center_lib_007
 from spotmicroai.controller import Spotmicro_lib_020
+from spotmicroai.controller import Spotmicro_Servo_lib
 from spotmicroai.controller.Spotmicro_Lcd_lib import LCDScreenController
+from spotmicroai.controller.Spotmicro_Servo_lib import ServoController
 from spotmicroai.utilities.log import Logger
 from spotmicroai.utilities.utils import Utils
 
@@ -40,88 +42,8 @@ def setRGB(r, g, b):
     ##i2c.writeto (DISPLAY_RGB_ADDR,bytes([2,b]),stop=False)
 
 def setLcdScreen(lcdController, status):
-    lcdController.status    = status
-    lcdController.update_lcd_creen()
+    lcdController.update_lcd_status(status)
     logController.info("%s" % status)
-
-def servo_moving(pos, move):
-
-    global orgthetalf
-    global orgthetarf
-    global orgthetarr
-    global orgthetalr
-
-    thetalf_reply   = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[0]+xtlf, pos[1]+ytlf, pos[2]+ztlf, 1)
-    thetarf_reply   = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[3]+xtrf, pos[4]+ytrf, pos[5]+ztrf, -1)
-    thetarr_reply   = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[6]+xtrr, pos[7]+ytrr, pos[8]+ztrr, -1)
-    thetalr_reply   = Spot.IK(Spot.L0, Spot.L1, Spot.L2, Spot.d, pos[9]+xtlr, pos[10]+ytlr, pos[11]+ztlr, 1)
-
-    thetalf         = thetalf_reply[0]
-    thetarf         = thetarf_reply[0]
-    thetarr         = thetarr_reply[0]
-    thetalr         = thetalr_reply[0]
-
-    if move == True:
-        if (thetalf_reply[1] == False):
-            try:
-                ShoulderAngle   = int(thetalf[0]/pi*180 * Spot.angle_scale_factor_lf1*Spot.dir01+Spot.zero01)
-                LegAngle        = int(thetalf[1]/pi*180 * Spot.angle_scale_factor_lf2*Spot.dir02+Spot.zero02)
-                FeetAngle       = int(thetalf[2]/pi*180 * Spot.angle_scale_factor_lf3*Spot.dir03+Spot.zero03)
-                if (orgthetalf[0] == ShoulderAngle and orgthetalf[1] == LegAngle and orgthetalf[2] == FeetAngle):
-                    return
-                #else:
-                #    print('Front_LEFT : ', ShoulderAngle, ', ', LegAngle, ', ', FeetAngle)
-
-                orgthetalf      = [ShoulderAngle, LegAngle, FeetAngle]
-            except ValueError:
-                print('Angle out of Range')
-
-        if (thetarf_reply[1] == False):
-            try:
-                ShoulderAngle   = int(thetarf[0]/pi*180 * Spot.angle_scale_factor_rf1*Spot.dir04+Spot.zero04)
-                LegAngle        = int(thetarf[1]/pi*180 * Spot.angle_scale_factor_rf2*Spot.dir05+Spot.zero05)
-                FeetAngle       = int(thetarf[2]/pi*180 * Spot.angle_scale_factor_rf3*Spot.dir06+Spot.zero06)
-                if (orgthetarf[0] == ShoulderAngle and orgthetarf[1] == LegAngle and orgthetarf[2] == FeetAngle):
-                    return
-                #else:
-                #    print('Front_RIGHT : ', ShoulderAngle, ', ', LegAngle, ', ', FeetAngle)
-
-                orgthetarf      = [ShoulderAngle, LegAngle, FeetAngle]
-            except ValueError:
-                print('Angle out of Range')
-
-        if (thetarr_reply[1] == False):
-            try:
-                ShoulderAngle   = int(thetarr[0]/pi*180 * Spot.angle_scale_factor_rr1*Spot.dir07+Spot.zero07)
-                LegAngle        = int(thetarr[1]/pi*180 * Spot.angle_scale_factor_rr2*Spot.dir07+Spot.zero08)
-                FeetAngle       = int(thetarr[2]/pi*180 * Spot.angle_scale_factor_rr3*Spot.dir09+Spot.zero09)
-                
-                if (orgthetarr[0] == ShoulderAngle and orgthetarr[1] == LegAngle and orgthetarr[2] == FeetAngle):
-                    return
-                #else:
-                #    print('REAR_RIGHT : ', ShoulderAngle, ', ', LegAngle, ', ', FeetAngle)
-
-                orgthetarr      = [ShoulderAngle, LegAngle, FeetAngle]
-            except ValueError:
-                print('Angle out of Range')
-
-        if (thetalr_reply[1] == False):
-            try:
-                ShoulderAngle   = int(thetalr[0]/pi*180 * Spot.angle_scale_factor_lr1*Spot.dir10+Spot.zero10)
-                LegAngle        = int(thetalr[1]/pi*180 * Spot.angle_scale_factor_lr2*Spot.dir11+Spot.zero11)
-                FeetAngle       = int(thetalr[2]/pi*180 * Spot.angle_scale_factor_lr3*Spot.dir12+Spot.zero12)
-                
-                if (orgthetalr[0] == ShoulderAngle and orgthetalr[1] == LegAngle and orgthetalr[2] == FeetAngle):
-                    return
-                #else:
-                #    print('REAR_LEFT : ', ShoulderAngle, ', ', LegAngle, ', ', FeetAngle)
-
-                orgthetalr      = [ShoulderAngle, LegAngle, FeetAngle]
-            except ValueError:
-                print('Angle out of Range')
-
-        print(orgthetalf, orgthetarf, orgthetarr, orgthetalr)
-
 
 pygame.init()
 anim            = True      # animation display
@@ -130,7 +52,6 @@ IMU_Comp        = False
 
 logController   = Logger().setup_logger()
 logController.info("SpotMicro starting...")
-
 
 """ Joystick Init """
 #pygame.event.set_grab(True)
@@ -161,6 +82,8 @@ DISPLAY_RGB_ADDR    = 0x60
 lcdController   = LCDScreenController(LCD_I2C_ADDR, logController, joystick1)
 Spot            = Spotmicro_lib_020.Spot()
 SpotCG          = Spotmicro_Gravity_Center_lib_007.SpotCG(Spot)
+SpotAnim        = None
+servoController = ServoController(Spot)
 
 if anim == True:
     SpotAnim    = Spotmicro_Animate_lib_009.SpotAnim(Spot)
@@ -257,9 +180,6 @@ trot            = False
 stop            = False    # walking stop sequence activation
 lock            = False    # locking start key temporarily in order to avoid start and stop if start key is pressed too long
 
-#lockmouse   = False
-#mouseclick  = False
-
 stance          = [True, True, True, True]
 cw              = 1
 walking_speed   = 0
@@ -286,28 +206,6 @@ Bat             = 0  # counter for battery check
 Kp              = 4
 Ki              = 22  # was up to 22
 Kd              = 0  # was up to 0.08
-
-"""Servo trimming """
-xtlf            = 14
-ytlf            = 0
-ztlf            = 0
-
-xtrf            = 14
-ytrf            = 0
-ztrf            = 3
-
-xtrr            = 14
-ytrr            = 0
-ztrr            = 0
-
-xtlr            = 14
-ytlr            = 0
-ztlr            = 0
-
-orgthetalf      = [0,0,0]
-orgthetarf      = [0,0,0]
-orgthetarr      = [0,0,0]
-orgthetalr      = [0,0,0]
 
 """ Main loop intialization """
 continuer       = True
@@ -340,17 +238,14 @@ transtep        = 0.025
 """ Main Program """
 """ """
 
-
 """set screen background color"""
 setRGB(127, 127, 255)
-
 
 """ Initialize legs and body positions """
 x_spot      = [0, x_offset, Spot.xlf, Spot.xrf, Spot.xrr, Spot.xlr, 0, 0, 0, 0]
 y_spot      = [0, 0, Spot.ylf+track, Spot.yrf-track, Spot.yrr-track, Spot.ylr+track, 0, 0, 0, 0]
 z_spot      = [0, b_height, 0, 0, 0, 0, 0, 0, 0, 0]
 theta_spot  = [0, 0, 0, 0, 0, 0]
-
 
 """theta_spot = [x angle ground, y angle ground, z angle body in space, x angle body, y angle body, z angle body] """
 # theta xyz of ground then theta xyz of frame/body
@@ -382,7 +277,6 @@ tt                  = time()  # initialize time for speed and acceleration calcu
 joystart_rightpaw   = True
 joystart_leftpaw    = True
 clock_tick          = 100
-attention_ready     = True
 board_temperature   = 0
 
 setLcdScreen(lcdController, 'Ready')
@@ -770,15 +664,14 @@ while (continuer):
             tstep = tstep4
             trans = 0
             trot = False
-            attention_ready = True
 
             setRGB(127, 127, 255)
             setLcdScreen(lcdController, 'Walking Wait')
 
     if (sitting == True):
-        alpha_sitting = -30/180*pi
-        alpha_pawing = 0/180*pi
-        L_paw = 220
+        alpha_sitting   = -30/180*pi
+        alpha_pawing    = 0/180*pi
+        L_paw           = 220
 
         x_end_sitting = Spot.xlr-Spot.L2 + Spot.L1 * cos(pi/3) + Spot.Lb/2*cos(-alpha_sitting) - Spot.d*sin(-alpha_sitting)
         z_end_sitting = Spot.L1 * sin(pi/3) + Spot.Lb/2*sin(-alpha_sitting) + Spot.d*cos(-alpha_sitting)
@@ -1094,7 +987,7 @@ while (continuer):
     distance.append(dCG[0])
     timing.append(t)
 
-    servo_moving(pos, SERVO_Move)
+    servoController.servo_moving(pos, SERVO_Move)
 
 setRGB(0, 0, 0)
 setLcdScreen(lcdController, 'Exit')

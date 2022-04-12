@@ -35,7 +35,7 @@ class LCDScreenController:
                 self.screen                 = LCD_16x2_I2C_driver.lcd(address=self.address)
 
                 self.screen.lcd_clear()
-                self.update_lcd_creen()
+                self.update_lcd_screen()
                 self.turn_on()
                 self.is_alive = True
 
@@ -58,11 +58,15 @@ class LCDScreenController:
     def turn_on(self):
         self.screen.backlight(1)
 
-    def update_lcd_creen(self):  # https://www.quinapalus.com/hd44780udg.html
+    def update_lcd_status(self, status):
+        self.status = status
+        self.update_lcd_screen()
+        
+    def update_lcd_screen(self):  # https://www.quinapalus.com/hd44780udg.html
 
         if self.is_alive == False:
             return
-            
+
         if self.lcd_screen_controller == 'ON':
             self.turn_on()
         elif self.lcd_screen_controller == 'OFF':
