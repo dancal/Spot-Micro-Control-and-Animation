@@ -19,6 +19,7 @@ from spotmicroai.controller import Spotmicro_Gravity_Center_lib_007
 from spotmicroai.controller import Spotmicro_lib_020
 from spotmicroai.controller.Spotmicro_Lcd_lib import LCDScreenController
 from spotmicroai.utilities.log import Logger
+from spotmicroai.utilities.utils import Utils
 
 #import adafruit_pca9685
 #import adafruit_mpu6050
@@ -42,34 +43,6 @@ def setLcdScreen(lcdController, status):
     lcdController.status    = status
     lcdController.update_lcd_creen()
     logController.info("%s" % status)
-
-""" Angle measurement Complementary filter """
-def comp_filter(angle, t, T):
-    # Complementary filter calculates body angles around xt and y axis from IMU data
-    ## acc = mpu.acceleration
-    ## gyr = mpu.gyro
-    acc = [0, 0, 0]
-    gyr = [0, 0]
-
-    denb = sqrt(acc[1]**2+acc[2]**2)
-    dena = sqrt(acc[2]**2+acc[0]**2)
-
-    if (dena == 0):
-        alpha = 0
-    else:
-        alpha = atan(acc[1]/dena)
-
-    if (denb == 0):
-        beta = 0
-    else:
-        beta = atan(acc[0]/denb)
-
-    A = T/(T+t)
-
-    anglex = A*(angle[0]+t*gyr[0]/180*pi)+(1-A)*alpha
-    angley = A*(angle[1]+t*gyr[1]/180*pi)+(1-A)*beta
-
-    return [anglex, angley]
 
 def servo_moving(pos, move):
 
@@ -418,7 +391,7 @@ logController.info('SpotMicro Loop...')
 while (continuer):
 
     clock.tick(clock_tick)
-    angle               = comp_filter(angle, tstep, Tcomp)
+    angle               = Utils.comp_filter(angle, tstep, Tcomp)
     anglex_buff[iangle] = angle[0]+zeroangle_x
     angley_buff[iangle] = angle[1]+zeroangle_y
     Angle_old           = Angle
