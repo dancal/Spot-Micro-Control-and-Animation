@@ -54,12 +54,19 @@ class Spot:
     zero12 = 73 + 90 * angle_scale_factor_lr3  # was 67
 
     """" Spotmicro dimensions """
-    Wb = 78  # Shoulder/hip width
-    Lb = 187.1  # Shoulder to hip length
-    L0 = 58.09  # Shoulder articulation width
-    d = 10.73  # Shoulder articulation height
-    L1 = 108.31  # Leg length
-    L2 = 138  # Foreleg length
+    #Wb  = 78     # Shoulder/hip width
+    #Lb  = 187.1  # Shoulder to hip length
+    #L0  = 58.09  # Shoulder articulation width
+    #d   = 10.73  # Shoulder articulation height
+    #L1  = 108.31  # Leg length
+    #L2  = 138  # Foreleg length
+
+    Wb  = 135     # Shoulder/hip width
+    Lb  = 287.1  # Shoulder to hip length
+    L0  = 58.09  # Shoulder articulation width
+    d   = 10.73  # Shoulder articulation height
+    L1  = 108.31  # Leg length
+    L2  = 138  # Foreleg length
 
     """ Anchor points """
 
@@ -132,8 +139,7 @@ class Spot:
             t5 = sin(thetay)
             t6 = cos(thetax)
             t7 = sin(thetax)
-            M = [t2*t4, t3*t6+t4*t5*t7, t3*t7-t4*t5*t6, -t2*t3,
-                 t4*t6-t3*t5*t7, t4*t7+t3*t5*t6, t5, -t2*t7, t2*t6]
+            M = [t2*t4, t3*t6+t4*t5*t7, t3*t7-t4*t5*t6, -t2*t3, t4*t6-t3*t5*t7, t4*t7+t3*t5*t6, t5, -t2*t7, t2*t6]
         else:
             # Rz*Ry*Rx
             t2 = cos(thetaz)
@@ -142,8 +148,7 @@ class Spot:
             t5 = cos(thetax)
             t6 = sin(thetay)
             t7 = cos(thetay)
-            M = [t2*t7, t4*t7, -t6, -t4*t5+t2*t3*t6, t2*t5+t3*t4 *
-                 t6, t3*t7, t3*t4+t2*t5*t6, -t2*t3+t4*t5*t6, t5*t7]
+            M = [t2*t7, t4*t7, -t6, -t4*t5+t2*t3*t6, t2*t5+t3*t4 * t6, t3*t7, t3*t4+t2*t5*t6, -t2*t3+t4*t5*t6, t5*t7]
         return M
 
     def new_coordinates(self, M, x, y, z, x0, y0, z0):
@@ -185,8 +190,7 @@ class Spot:
         error = False
         try:
             theta1 = side*(-pi/2+asin(t5*t8))+asin(t5*y)
-            theta2 = -asin(t14*x)+asin(L2*t14 *
-                                       sqrt(1/t15*1/t16*t12**2*(-1/4)+1))
+            theta2 = -asin(t14*x)+asin(L2*t14 * sqrt(1/t15*1/t16*t12**2*(-1/4)+1))
             theta3 = -pi + acos(-t12/2/(L1*L2))
 
         except ValueError:
@@ -214,10 +218,8 @@ class Spot:
         z_shoulder2 = side*Spot.L0*sin(theta[0])-Spot.d*cos(theta[0])
 
         x_elbow = -Spot.L1*sin(theta[1])
-        y_elbow = side*Spot.L0 * \
-            cos(theta[0])-(-Spot.d-Spot.L1*cos(theta[1]))*sin(theta[0])
-        z_elbow = side*Spot.L0 * \
-            sin(theta[0]) + (-Spot.d-Spot.L1*cos(theta[1]))*cos(theta[0])
+        y_elbow = side*Spot.L0 * cos(theta[0])-(-Spot.d-Spot.L1*cos(theta[1]))*sin(theta[0])
+        z_elbow = side*Spot.L0 * sin(theta[0]) + (-Spot.d-Spot.L1*cos(theta[1]))*cos(theta[0])
 
         return [x_shoulder1, x_shoulder2, x_elbow, y_shoulder1, y_shoulder2, y_elbow, z_shoulder1, z_shoulder2, z_elbow]
 
@@ -275,8 +277,7 @@ class Spot:
 
         Ms = Spot.xyz_rotation_matrix(self, 0, 0, theta_spot_updated[2], False)
 
-        s = Spot.new_coordinates(
-            self, Ms, xc, yc, 0, x_spot[0], y_spot[0], z_spot[0])
+        s = Spot.new_coordinates(self, Ms, xc, yc, 0, x_spot[0], y_spot[0], z_spot[0])
         xs = s[0]
         ys = s[1]
 
@@ -341,12 +342,9 @@ class Spot:
                     t2 = seq[i]+stepl
                     if (phase <= 2):  # start
                         # End position alpha
-                        alpha[i] = -seq[i]/(1-stepl)/2 + \
-                            (t2-seq[i])/stepl/(1-stepl)*seq[i]
+                        alpha[i] = -seq[i]/(1-stepl)/2 + (t2-seq[i])/stepl/(1-stepl)*seq[i]
                     if (phase >= 5):  # stop
-                        alpha[i] = -1/2 + seq[i] / \
-                            (1-stepl)/2 + (t2-seq[i]) / \
-                            stepl*(1-seq[i]/(1-stepl))
+                        alpha[i] = -1/2 + seq[i] / (1-stepl)/2 + (t2-seq[i]) / stepl*(1-seq[i]/(1-stepl))
                     if (phase <= 4) & (phase >= 3):  # walk
                         alpha[i] = -1/2 + ((t2-seq[i])/stepl)
                 else:
@@ -354,8 +352,7 @@ class Spot:
                     stance[i] = True
 
         """ Compensation Calculation """
-        stance_test = np.sum(
-            stance)  # if sum = 4 all feet are on the floor --> body balance
+        stance_test = np.sum(stance)  # if sum = 4 all feet are on the floor --> body balance
 
         # absolute stance area target point
         # Barycenter of sustentation area with higher weight of diagonal points
@@ -363,22 +360,14 @@ class Spot:
         x_abs_area = np.zeros(4)
         y_abs_area = np.zeros(4)
 
-        x_abs_area[0] = ((x_spot[3]+x_spot[5])*weight+x_spot[4]) / \
-            (2*weight+1)*(1-trans) + (x_spot[3]+x_spot[5])/2 * trans
-        y_abs_area[0] = ((y_spot[3]+y_spot[5])*weight+y_spot[4]) / \
-            (2*weight+1)*(1-trans) + (y_spot[3]+y_spot[5])/2 * trans
-        x_abs_area[1] = ((x_spot[2]+x_spot[4])*weight+x_spot[5]) / \
-            (2*weight+1)*(1-trans) + (x_spot[2]+x_spot[4])/2 * trans
-        y_abs_area[1] = ((y_spot[2]+y_spot[4])*weight+y_spot[5]) / \
-            (2*weight+1)*(1-trans) + (y_spot[2]+y_spot[4])/2 * trans
-        x_abs_area[2] = ((x_spot[3]+x_spot[5])*weight+x_spot[2]) / \
-            (2*weight+1)*(1-trans) + (x_spot[3]+x_spot[5])/2 * trans
-        y_abs_area[2] = ((y_spot[3]+y_spot[5])*weight+y_spot[2]) / \
-            (2*weight+1)*(1-trans) + (y_spot[3]+y_spot[5])/2 * trans
-        x_abs_area[3] = ((x_spot[2]+x_spot[4])*weight+x_spot[3]) / \
-            (2*weight+1)*(1-trans) + (x_spot[2]+x_spot[4])/2 * trans
-        y_abs_area[3] = ((y_spot[2]+y_spot[4])*weight+y_spot[3]) / \
-            (2*weight+1)*(1-trans) + (y_spot[2]+y_spot[4])/2 * trans
+        x_abs_area[0] = ((x_spot[3]+x_spot[5])*weight+x_spot[4]) / (2*weight+1)*(1-trans) + (x_spot[3]+x_spot[5])/2 * trans
+        y_abs_area[0] = ((y_spot[3]+y_spot[5])*weight+y_spot[4]) / (2*weight+1)*(1-trans) + (y_spot[3]+y_spot[5])/2 * trans
+        x_abs_area[1] = ((x_spot[2]+x_spot[4])*weight+x_spot[5]) / (2*weight+1)*(1-trans) + (x_spot[2]+x_spot[4])/2 * trans
+        y_abs_area[1] = ((y_spot[2]+y_spot[4])*weight+y_spot[5]) / (2*weight+1)*(1-trans) + (y_spot[2]+y_spot[4])/2 * trans
+        x_abs_area[2] = ((x_spot[3]+x_spot[5])*weight+x_spot[2]) / (2*weight+1)*(1-trans) + (x_spot[3]+x_spot[5])/2 * trans
+        y_abs_area[2] = ((y_spot[3]+y_spot[5])*weight+y_spot[2]) / (2*weight+1)*(1-trans) + (y_spot[3]+y_spot[5])/2 * trans
+        x_abs_area[3] = ((x_spot[2]+x_spot[4])*weight+x_spot[3]) / (2*weight+1)*(1-trans) + (x_spot[2]+x_spot[4])/2 * trans
+        y_abs_area[3] = ((y_spot[2]+y_spot[4])*weight+y_spot[3]) / (2*weight+1)*(1-trans) + (y_spot[2]+y_spot[4])/2 * trans
 
         if (stance_test == 4):
             istart = 0
@@ -396,10 +385,8 @@ class Spot:
                     iend = i
 
             if (t1 > (seq[istart]+stepl)):
-                x_abs_comp = x_abs_area[istart]+(
-                    x_abs_area[iend]-x_abs_area[istart])*(t1-tstart-stepl)/(tr-stepl)
-                y_abs_comp = y_abs_area[istart]+(
-                    y_abs_area[iend]-y_abs_area[istart])*(t1-tstart-stepl)/(tr-stepl)
+                x_abs_comp = x_abs_area[istart]+(x_abs_area[iend]-x_abs_area[istart])*(t1-tstart-stepl)/(tr-stepl)
+                y_abs_comp = y_abs_area[istart]+(y_abs_area[iend]-y_abs_area[istart])*(t1-tstart-stepl)/(tr-stepl)
             else:
                 x_abs_comp = x_abs_area[istart]
                 y_abs_comp = y_abs_area[istart]
@@ -410,11 +397,9 @@ class Spot:
                     x_abs_comp = x_abs_area[i]
                     y_abs_comp = y_abs_area[i]
 
-        Msi_comp = Spot.xyz_rotation_matrix(
-            self, 0, 0, -theta_spot_updated[2], True)
+        Msi_comp = Spot.xyz_rotation_matrix(self, 0, 0, -theta_spot_updated[2], True)
         # compensation calculation in body center frame
-        comp = Spot.new_coordinates(
-            self, Msi_comp, x_abs_comp-x_spot[0], y_abs_comp-y_spot[0], 0, 0, 0, 0)
+        comp = Spot.new_coordinates(self, Msi_comp, x_abs_comp-x_spot[0], y_abs_comp-y_spot[0], 0, 0, 0, 0)
         """ Compensation calculation with theta """
         v_amp_t = v_amp
 
@@ -431,8 +416,7 @@ class Spot:
         Ms_comp = Spot.xyz_rotation_matrix(
             self, 0, 0, theta_spot_updated[2], False)
         # Compensation calculation absoltute space frame
-        compt = Spot.new_coordinates(
-            self, Ms_comp, (comp[0]-CG[0])*kcomp+x_offset, (comp[1]-CG[1])*kcomp, 0, 0, 0, 0)
+        compt = Spot.new_coordinates(self, Ms_comp, (comp[0]-CG[0])*kcomp+x_offset, (comp[1]-CG[1])*kcomp, 0, 0, 0, 0)
         """ Frame center new position with gravity center compensation, offset and height """
         x_framecenter_comp = foot_center[0] + compt[0]
         y_framecenter_comp = foot_center[1] + compt[1]
@@ -449,8 +433,7 @@ class Spot:
 
         for i in range(0, 4):
             # Body corners calculation in absolute space frame
-            frame_corner = Spot.new_coordinates(
-                self, Ms_updated, x_frame[i], y_frame[i], z_frame[i], x_framecenter_comp, y_framecenter_comp, z_framecenter_comp)
+            frame_corner = Spot.new_coordinates(self, Ms_updated, x_frame[i], y_frame[i], z_frame[i], x_framecenter_comp, y_framecenter_comp, z_framecenter_comp)
             x_framecorner[i] = frame_corner[0]
             y_framecorner[i] = frame_corner[1]
             z_framecorner[i] = frame_corner[2]
@@ -469,39 +452,29 @@ class Spot:
             if (t1 > seq[i]) & (t1 < (seq[i]+tr)):
                 # relative position calculation (used for inverse kinematics)
                 alphah = an[i]+mangle*alpha[i]*cw
-                xleg_target = xc + \
-                    radii[i]*cos(alphah) - (comp[0]-CG[0]) * \
-                    kcomp - x_offset - x_frame[i]
-                yleg_target = yc + \
-                    radii[i]*sin(alphah) - (comp[1]-CG[1])*kcomp - y_frame[i]
+                xleg_target = xc + radii[i]*cos(alphah) - (comp[0]-CG[0]) * kcomp - x_offset - x_frame[i]
+                yleg_target = yc + radii[i]*sin(alphah) - (comp[1]-CG[1])*kcomp - y_frame[i]
 
                 leg_current = Spot.new_coordinates(
                     self, Msi_comp, x_spot[i+2]-x_framecorner[i], y_spot[i+2]-y_framecorner[i], -z_framecorner[i], 0, 0, 0)
                 # interpolate between current position and targe
                 if ((seq[i]+stepl-t1) > tstep):
-                    xint[i] = leg_current[0] + \
-                        (xleg_target - leg_current[0]
-                         )*(tstep)/(seq[i]+stepl-t1)
-                    yint[i] = leg_current[1] + \
-                        (yleg_target - leg_current[1]
-                         )*(tstep)/(seq[i]+stepl-t1)
+                    xint[i] = leg_current[0] + (xleg_target - leg_current[0])*(tstep)/(seq[i]+stepl-t1)
+                    yint[i] = leg_current[1] + (yleg_target - leg_current[1])*(tstep)/(seq[i]+stepl-t1)
                 else:
                     xint[i] = xleg_target
                     yint[i] = yleg_target
                 zint[i] = leg_current[2] + v_amp_t*sin(alphav[i])
                 #print (leg_current[2],zint[i],leg_current[2]-zint[i])
-                Msi_body = Spot.xyz_rotation_matrix(
-                    self, -theta_spot_updated[3], -theta_spot_updated[4], -theta_spot_updated[5], True)
-                legs = Spot.new_coordinates(
-                    self, Msi_body, xint[i], yint[i], zint[i], 0, 0, 0)
+                Msi_body = Spot.xyz_rotation_matrix(self, -theta_spot_updated[3], -theta_spot_updated[4], -theta_spot_updated[5], True)
+                legs = Spot.new_coordinates(self, Msi_body, xint[i], yint[i], zint[i], 0, 0, 0)
                 xleg[i] = legs[0]
                 yleg[i] = legs[1]
                 zleg[i] = legs[2]
 
                 # absolute foot position
                 #Msb_updated = Spot.xyz_rotation_matrix (self,0,0,theta_spot_updated[2]+theta_spot_updated[5],False)
-                foot_abs = Spot.new_coordinates(
-                    self, Ms_updated, xleg[i], yleg[i], zleg[i], x_framecorner[i], y_framecorner[i], z_framecorner[i])
+                foot_abs = Spot.new_coordinates(self, Ms_updated, xleg[i], yleg[i], zleg[i], x_framecorner[i], y_framecorner[i], z_framecorner[i])
 
                 xabs[i] = foot_abs[0]
                 yabs[i] = foot_abs[1]
@@ -513,21 +486,16 @@ class Spot:
                 zabs[i] = 0
 
                 # relative foot position of foot on the ground/floor for inverse kinematics
-                leg = Spot.new_coordinates(
-                    self, Msi_updated, xabs[i]-x_framecorner[i], yabs[i]-y_framecorner[i], zabs[i]-z_framecorner[i], 0, 0, 0)
+                leg = Spot.new_coordinates(self, Msi_updated, xabs[i]-x_framecorner[i], yabs[i]-y_framecorner[i], zabs[i]-z_framecorner[i], 0, 0, 0)
                 xleg[i] = leg[0]
                 yleg[i] = leg[1]
                 zleg[i] = leg[2]
 
-        x_spot_updated = [foot_center[0], x_framecenter_comp, xabs[0], xabs[1],
-                          xabs[2], xabs[3], x_spot[6], x_spot[7], x_spot[8], x_spot[9]]
-        y_spot_updated = [foot_center[1], y_framecenter_comp, yabs[0], yabs[1],
-                          yabs[2], yabs[3], y_spot[6], y_spot[7], y_spot[8], y_spot[9]]
-        z_spot_updated = [foot_center[2], z_framecenter_comp, zabs[0], zabs[1],
-                          zabs[2], zabs[3], z_spot[6], z_spot[7], z_spot[8], z_spot[9]]
+        x_spot_updated = [foot_center[0], x_framecenter_comp, xabs[0], xabs[1],xabs[2], xabs[3], x_spot[6], x_spot[7], x_spot[8], x_spot[9]]
+        y_spot_updated = [foot_center[1], y_framecenter_comp, yabs[0], yabs[1],yabs[2], yabs[3], y_spot[6], y_spot[7], y_spot[8], y_spot[9]]
+        z_spot_updated = [foot_center[2], z_framecenter_comp, zabs[0], zabs[1],zabs[2], zabs[3], z_spot[6], z_spot[7], z_spot[8], z_spot[9]]
 
-        pos = [xleg[0], yleg[0], zleg[0], xleg[1], yleg[1], zleg[1], xleg[2], yleg[2], zleg[2],
-               xleg[3], yleg[3], zleg[3], theta_spot_updated, x_spot_updated, y_spot_updated, z_spot_updated]
+        pos = [xleg[0], yleg[0], zleg[0], xleg[1], yleg[1], zleg[1], xleg[2], yleg[2], zleg[2],xleg[3], yleg[3], zleg[3], theta_spot_updated, x_spot_updated, y_spot_updated, z_spot_updated]
         return pos
 
     def moving(self, t, start_frame_pos, end_frame_pos, pos):
@@ -541,8 +509,7 @@ class Spot:
         frame_pos = np.zeros(6)
 
         for i in range(0, 6):
-            frame_pos[i] = start_frame_pos[i] + \
-                (end_frame_pos[i] - start_frame_pos[i])*t
+            frame_pos[i] = start_frame_pos[i] + (end_frame_pos[i] - start_frame_pos[i])*t
 
         theta_spot_updated[3] = frame_pos[0]
         theta_spot_updated[4] = frame_pos[1]
@@ -560,8 +527,7 @@ class Spot:
         z_frame = [0, 0, 0, 0]
 
         # New absolute frame center position
-        frame_center_abs = Spot.new_coordinates(
-            self, Ms, frame_pos[3], frame_pos[4], frame_pos[5], x_spot_updated[0], y_spot_updated[0], z_spot_updated[0])
+        frame_center_abs = Spot.new_coordinates(self, Ms, frame_pos[3], frame_pos[4], frame_pos[5], x_spot_updated[0], y_spot_updated[0], z_spot_updated[0])
 
         # absolute frame corners position coordinates
         x_frame_corner_abs = np.zeros(4)
@@ -569,10 +535,8 @@ class Spot:
         z_frame_corner_abs = np.zeros(4)
 
         for i in range(0, 4):
-            frame_corner = Spot.new_coordinates(
-                self, Mf, x_frame[i], y_frame[i], z_frame[i], 0, 0, 0)
-            frame_corner_abs = Spot.new_coordinates(
-                self, Ms, frame_corner[0], frame_corner[1], frame_corner[2], frame_center_abs[0], frame_center_abs[1], frame_center_abs[2])
+            frame_corner = Spot.new_coordinates(self, Mf, x_frame[i], y_frame[i], z_frame[i], 0, 0, 0)
+            frame_corner_abs = Spot.new_coordinates(self, Ms, frame_corner[0], frame_corner[1], frame_corner[2], frame_center_abs[0], frame_center_abs[1], frame_center_abs[2])
             x_frame_corner_abs[i] = frame_corner_abs[0]
             y_frame_corner_abs[i] = frame_corner_abs[1]
             z_frame_corner_abs[i] = frame_corner_abs[2]
@@ -583,12 +547,10 @@ class Spot:
         zleg = np.zeros(4)
 
         # Leg relative position to front corners
-        Mi = Spot.xyz_rotation_matrix(self, -theta_spot_updated[3], -theta_spot_updated[4], -(
-            theta_spot_updated[2]+theta_spot_updated[5]), True)
+        Mi = Spot.xyz_rotation_matrix(self, -theta_spot_updated[3], -theta_spot_updated[4], -(theta_spot_updated[2]+theta_spot_updated[5]), True)
 
         for i in range(0, 4):
-            leg = Spot.new_coordinates(self, Mi, x_spot_updated[i+2]-x_frame_corner_abs[i], y_spot_updated[i+2] -
-                                       y_frame_corner_abs[i], z_spot_updated[i+2]-z_frame_corner_abs[i], 0, 0, 0)
+            leg = Spot.new_coordinates(self, Mi, x_spot_updated[i+2]-x_frame_corner_abs[i], y_spot_updated[i+2] -y_frame_corner_abs[i], z_spot_updated[i+2]-z_frame_corner_abs[i], 0, 0, 0)
             xleg[i] = leg[0]
             yleg[i] = leg[1]
             zleg[i] = leg[2]
@@ -597,6 +559,5 @@ class Spot:
         y_spot_updated[1] = frame_center_abs[1]
         z_spot_updated[1] = frame_center_abs[2]
 
-        pos = [xleg[0], yleg[0], zleg[0], xleg[1], yleg[1], zleg[1], xleg[2], yleg[2], zleg[2],
-               xleg[3], yleg[3], zleg[3], theta_spot_updated, x_spot_updated, y_spot_updated, z_spot_updated]
+        pos = [xleg[0], yleg[0], zleg[0], xleg[1], yleg[1], zleg[1], xleg[2], yleg[2], zleg[2],xleg[3], yleg[3], zleg[3], theta_spot_updated, x_spot_updated, y_spot_updated, z_spot_updated]
         return pos
