@@ -1,3 +1,5 @@
+from math import pi, sin, cos, atan, atan2, sqrt
+
 class ServoController:
     Spot            = None
 

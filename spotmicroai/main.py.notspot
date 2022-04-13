@@ -48,6 +48,102 @@ def setLcdScreen(lcdController, status):
     lcdController.update_lcd_status(status)
     logController.info("%s" % status)
 
+class Joy:
+    axes    = []
+    buttons = []
+    last_send_time = 0
+
+def ramped_vel(self,v_prev,v_target,t_prev,t_now):
+    # This function was originally not written by me:
+    # https://github.com/osrf/rosbook/blob/master/teleop_bot/keys_to_twist_with_ramps.py
+    step = (t_now - t_prev).to_sec()
+    sign = self.available_speeds[self.speed_index] if (v_target > v_prev) else -self.available_speeds[self.speed_index]
+    error = fabs(v_target - v_prev)
+
+    # if we can get there within this timestep -> we're done.
+    if error < self.available_speeds[self.speed_index]*step:
+        return v_target
+    else:
+        return v_prev + sign * step # take a step toward the target
+
+
+pygame.init()
+pygame.joystick.init()
+joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
+for joy in joysticks:
+    print(joy.get_name(), joy.get_id(), joy.get_guid(), joy.get_instance_id())
+
+joystick1           = pygame.joystick.get_count()
+if joystick1 == 0:
+    # No joysticks!
+    print("Sorry, Game have found that no joystick is attached.")
+else:
+    joystick        = pygame.joystick.Joystick(0)
+    joystick.init()
+
+# Robot geometry
+body                = [0.1908, 0.080]
+legs                = [0.0, 0.04, 0.100, 0.094333]
+notspot_robot       = RobotController.Robot(body, legs, True)
+inverseKinematics   = robot_IK.InverseKinematics(body, legs)
+
+continuer   = True
+clock               = pygame.time.Clock()
+
+target_joy          = Joy()
+target_joy.axes     = [0.,0.,1.,0.,0.,1.,0.,0.]
+target_joy.buttons  = [0,0,0,0,0,0,0,0,0,0,0]
+target_joy.last_send_time = time()
+
+last_joy            = Joy()
+last_joy.axes       = [0.,0.,1.,0.,0.,1.,0.,0.]
+last_joy.buttons    = [0,0,0,0,0,0,0,0,0,0,0]
+while (continuer):
+    clock.tick(100)
+
+    leg_positions = notspot_robot.run()
+    notspot_robot.change_controller()
+    
+    for event in pygame.event.get():  # User did something.
+        if event.type == pygame.QUIT:
+            continuer = False
+
+        # Possible joystick actions: JOYAXISMOTION JOYBALLMOTION JOYBUTTONDOWN
+        # JOYBUTTONUP JOYHATMOTION
+        if event.type == pygame.JOYBUTTONDOWN:
+            if (event.joy == 2 and event.button == 0): # A
+                print('event.button A [ rest ]')
+                target_joy.buttons[0]    =  1
+            elif (event.joy == 2 and event.button == 1): # B
+                print('event.button B - [ trot ]')
+                target_joy.buttons[1]    =  1
+            elif (event.joy == 2 and event.button == 3): # X
+                print('event.button X - [ crawl ]')
+                target_joy.buttons[2]    =  1
+            elif (event.joy == 2 and event.button == 4): # Y
+                print('event.button Y - [ stand ]')
+                target_joy.buttons[3]    =  1
+            notspot_robot.joystick_command(target_joy)
+        elif event.type == pygame.JOYAXISMOTION:
+            target_joy.axes[event.axis]    =  event.value 
+        else:
+            target_joy.axes     = [0.,0.,1.,0.,0.,1.,0.,0.]
+            target_joy.buttons  = [0,0,0,0,0,0,0,0,0,0,0]
+
+        notspot_robot.joystick_command(target_joy)
+
+        dx      = notspot_robot.state.body_local_position[0]
+        dy      = notspot_robot.state.body_local_position[1]
+        dz      = notspot_robot.state.body_local_position[2]
+        
+        roll    = notspot_robot.state.body_local_orientation[0]
+        pitch   = notspot_robot.state.body_local_orientation[1]
+        yaw     = notspot_robot.state.body_local_orientation[2]
+
+        joint_angles = inverseKinematics.inverse_kinematics(leg_positions, dx, dy, dz, roll, pitch, yaw)
+        print(joint_angles)
+        #sleep(1)
+
 """ Display Management """
 #DISPLAY_TEXT_ADDR   = 0x3e
 LCD_I2C_ADDR    = 0
@@ -312,11 +408,13 @@ while (continuer):
             # JOYBUTTONUP JOYHATMOTION
             if event.type == pygame.JOYBUTTONDOWN:
                 print("Joystick button pressed.", event)
-                if (event.joy == 0 and event.button == 5): # LIST
+                if (event.joy == 1 and event.button == 11): # START
+                    print('event.button START')
+                elif (event.joy == 1 and event.button == 5): # LIST
                     print('event.button list')
-                elif (event.joy == 0 and event.button == 9): # return
+                elif (event.joy == 1 and event.button == 9): # return
                     print('event.button RETURN')
-                elif (event.joy == 0 and event.button == 8): # home
+                elif (event.joy == 1 and event.button == 8): # home
                     print('event.button HOME')
 
                 elif (event.joy == 2 and event.button == 6): # L1
@@ -333,27 +431,40 @@ while (continuer):
                 elif (event.joy == 2 and event.button == 9): # R2
                     lcdController.step_mode     = 'Run'
                     logController.info("step_mode : %s" % lcdController.step_mode)
-                elif (event.joy == 2 and event.button == 10): # SELECT
+                elif (event.joy == 3 and event.button == 10): # SELECT
                     print('event.button SELECT')
-                elif (event.joy == 2 and event.button == 11): # START
+                elif (event.joy == 3 and event.button == 11): # START
                     print('event.button START')
 
-                elif (event.joy == 2 and event.button == 0): # A
+                elif (event.joy == 3 and event.button == 0): # A
                     print('event.button A [ LIE ]')
                     if (stop == True):
                         stop    = False
                     else:
                         stop    = True
                     joybut[but_lie] = int(stop == True)
-                elif (event.joy == 2 and event.button == 1): # B
+                elif (event.joy == 3 and event.button == 1): # B
                     print('event.button B - [ but_twist ]')
-                    joybut[but_twist] = 1
-                elif (event.joy == 2 and event.button == 3): # X
+                    if (stop == True):
+                        stop    = False
+                    else:
+                        stop    = True
+                    joybut[but_twist] = int(stop == True)
+                elif (event.joy == 3 and event.button == 3): # X
                     print('event.button X - [Infinity Standstill]')
-                    joybut[but_walk_crawl] = 1
-                elif (event.joy == 2 and event.button == 4): # Y
+                    if (stop == True):
+                        stop    = False
+                    else:
+                        stop    = True
+                    joybut[but_walk_crawl] = int(stop == True)
+                elif (event.joy == 3 and event.button == 4): # Y
                     print('event.button Y - [SITDOWN]')
                     joybut[but_sit]     = 1
+                    if (stop == True):
+                        stop    = False
+                    else:
+                        stop    = True
+                    joybut[but_sit]     = int(stop == True)
                     #joypos[pos_turn]    = 1
                     #but_walk_trot   = 8
                     #but_walk_crawl  = 7
@@ -450,8 +561,8 @@ while (continuer):
     #print(joybut[but_walk_crawl], walking)
     if (joybut[but_walk_crawl] == 0) & (joybut[but_sit] == 0) & (joybut[but_pee] == 0) & (joybut[but_lie] == 0) & (joybut[but_twist] == 0) & (joybut[but_move] == 0) & (joybut[but_anim] == 0) & (lock == True):
         lock = False
-        #if (walking ==  False):
-        #    joybut[but_walk_crawl]  = 1
+        if (walking ==  False):
+            joybut[but_walk_crawl]  = 1
 
     # WALKING
     if (joybut[but_walk_crawl] == 1) & (walking == True) & (stop == False) & (lock == False):  # Quit walk mode

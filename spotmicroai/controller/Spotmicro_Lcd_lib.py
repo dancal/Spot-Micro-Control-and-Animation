@@ -2,19 +2,20 @@ import signal
 import sys
 import time
 
-#from spotmicroai.utilities.log import Logger
-from spotmicroai.utilities import LCD_16x2_I2C_driver
-#from spotmicroai.utilities.config import Config
+
+#from spotmicroai.utilities import LCD_16x2_I2C_driver
 from spotmicroai.utilities.system import System
-#log = Logger().setup_logger('LCD Screen controller')
+#from spotmicroai.utilities.log import Logger
+#from spotmicroai.utilities.config import Config
 
 class LCDScreenController:
     log                             = None
     is_alive                        = False
     address                         = 0
     screen                          = None
-
+    clock_tick                      = 0
     status                          = '---'
+    step_mode                       = ''
     remote_controller_controller    = None
     lcd_screen_controller           = None
     
